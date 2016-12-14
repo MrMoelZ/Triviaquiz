@@ -5,20 +5,49 @@
     <link rel="stylesheet" href="/style.css" type="text/css">
   </head>
   <body>
-  <a href="trivia">Trivia</a>
+  <div id="lobby">
+    <span class="bold">Lobby</span>
+  </div>
+  <div id="area">
+    <div id="messagediv">
+      <ul id="messages"></ul>
+    </div>
+    <form action="">
+      <input id="msg" autocomplete="off" /><button>Send</button>
+    </form>
+  </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
   var user = "";
+  do {
+    user = prompt('Bitte Namen eingeben',user);
+  }while(user == "");
   var socket = io();
+
+  function addUser(user) {
+    //let usr = $("<p>").append($("<a href='"+user+"'>").text(user));
+    let usr = $("<p>").text(user.name+' '+user.pts);
+    $('#lobby').append(usr);
+  }
+
+  function clearLobby() {
+    console.log('clear');
+    $('#lobby').text('');
+    $('#lobby').append($("<span class='bold'>").text("Lobby"));
+  }
+
+  socket.on('lobby_list',function(list){
+    clearLobby();
+    for(usr of list) {
+      addUser(usr);
+    }
+  });
   socket.on('connect',function(){
     socket.emit('register',user);
   });
   socket.on('lobby_add',function(user) {
-    //let usr = $("<p>").append($("<a href='"+user+"'>").text(user));
-    let usr = $("<p>").text(user);
-    $('#lobby').append(usr);
-    console.log('lobby added ',user);
+    addUser(user);
   });
   socket.on('confirm',function(confirmed) {
     if(!confirmed) window.reload();

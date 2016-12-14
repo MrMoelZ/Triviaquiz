@@ -3,19 +3,13 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var fs = require('fs');
-var counter = 0;
-var quizActive = false;
-var currentQuestion = 0;
-var users =[];
+
+var lobby = [];
 
 var db = require('./db');
+var quiz = require('./quiz');
 
 
-var questions = [
-	{'q':'Wer war der erste Mann auf dem Mond?','a':'Neil Armstrong'},
-	{'q':'Wie heißt der innerste Planet des Sonnensystems?','a':'Merkur'},
-	{'q':'Wieviele Bundesländer hat Deutschland (Zahl)?','a':'16'}
-];
 
 //express.static.mime.define({'text/css': ['md']});
 
@@ -26,32 +20,50 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname+'\\index.html');
 });
 
+app.get('/trivia',function(req,res){
+	res.sendFile(__dirname+'\\trivia.html');
+});
+
+app.get('/user/:name',function(req,res,name){
+	console.log(name);
+	res.send('not implementerino yet');
+});
+
+quiz.setIo(io);
 
 io.on('connection', function(socket){
+	console.log('connected', socket.id);
+	io.to(socket.id).emit('lobby_list',lobby);
 	socket.on('register',function(user) {
-		if(users.find(e=>e == user)) {
+		if(lobby.find(e=>e.name == user)) {
 			console.log('username exists ',user);
 			// emit reject to requesting client
 		}
 		else {
-			users.push(user);	
+			var usr = {'name':user,'id':socket.id,'pts':0};
 			// emit confirm to requesting client
-			console.log(user, ' connected');
+			console.log(user, ' registered with id ',socket.id);
+			lobby.push(usr);
+			console.log(JSON.stringify(lobby));
+			io.emit('lobby_add',usr);
 		} 
 	});
   	socket.on('chat message', function(msg){
+  		var usr = lobby.find(e=>e.name==msg.sender);
+
     	//console.log('message: ' + JSON.stringify(msg));
     	io.emit('chat message',msg);
-    	if(quizActive==true) {
-  			checkAnswer(msg);
+
+    	console.log('quiz active ',quiz.active);
+    	if(quiz.active==true) {
+  			quiz.checkAnswer(msg,usr);
   		}
     	if(msg.message == '/start') {
-    		currentQuestion=0;
-    		quizActive = true;
-  			startQuiz();
+    		quiz.active = true;
+  			quiz.startQuiz();
   		}
   		else if(msg.message == '/stop') {
-    		quizActive = false;
+    		quiz.deactivate();
   			io.emit('chat message',
 			{
 				'message':'Quiz beendet',
@@ -59,8 +71,19 @@ io.on('connection', function(socket){
 			});
   		}
   	});
+  	socket.on('disconnect',function() {
+  		console.log('disconnected',socket.id);
+  		var ix = lobby.findIndex(e=>e.id == socket.id);
+  		lobby.splice(ix,1);
+  		io.emit('lobby_list',lobby);
+  	});
 });
 
+
+exports.getLobby = function() {
+	console.log(JSON.stringify(lobby));
+	return lobby;
+}
 
 db.db();
 
@@ -68,57 +91,7 @@ db.db();
 //	console.log(eventType);
 //});
 
-function resetQuiz() {
 
-}
-
-function LoadQuestions() {
-
-}
-
-function startQuiz() {
-	console.log('Quiz started');
-	io.emit('chat message',{'message':'Quiz gestartet', 'sender':'Quizmaster'});
-	askQuestion();
-}
-
-function askQuestion() {
-	setTimeout(function() {
-		io.emit('chat message',{
-			'message':questions[currentQuestion].q,
-			'sender':'Quizmaster'})
-	},1500);
-}
-
-function checkAnswer(msg) {
-	console.log(msg.sender,' answered ',msg.message);
-	if(msg.message == questions[currentQuestion].a) {
-		io.emit('chat message',
-		{
-			'message':'Richtig \"'+msg.message+'\" ist die richtige Antwort!',
-			'sender':'Quizmaster'
-		});
-		if(++currentQuestion < questions.length) {
-			askQuestion();
-		}
-		else {
-			io.emit('chat message',
-			{
-				'message':'Keine weiteren Fragen vorhanden',
-				'sender':'Quizmaster'
-			});
-			quizActive = false;
-			currentQuestion=0;
-		}
-	}
-	else {
-		io.emit('chat message',
-		{
-			'message':'Leider falsch',
-			'sender':'Quizmaster'
-		});	
-	}
-}
 
 
 http.listen(1237, function(){
