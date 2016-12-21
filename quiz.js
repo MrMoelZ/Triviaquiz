@@ -59,7 +59,7 @@ exports.askQuestion = askQuestion;
 
 exports.checkAnswer = function(msg,usr) {
 	console.log(msg.sender,' answered ',msg.message);
-	if(msg.message == questions[rand].a) {
+	if(msg.message.toLowerCase() == questions[rand].a.toLowerCase()) {
 		usr.pts++;
 		io.emit('chat message',
 		{
