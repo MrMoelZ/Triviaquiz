@@ -14,10 +14,15 @@ var quiz = require('./quiz');
 //express.static.mime.define({'text/css': ['md']});
 
 app.use(express.static('files'));
+//app.use(express.static('scripts'));
 
 app.get('/', function(req, res){
 	res.set('X-Content-Type-Options', 'nosniff');
 	res.sendFile(__dirname+'\\index.html');
+});
+
+app.get('/vue',function(req,res){
+	res.sendFile(__dirname+'/vue.html');
 });
 
 app.get('/trivia',function(req,res){
