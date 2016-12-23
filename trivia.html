@@ -5,10 +5,11 @@
     <link rel="stylesheet" href="/style/main.css" type="text/css">
   </head>
   <body>
+
   <div id="lobby">
     <span class="bold">Lobby</span>
   </div>
-  <div id="area">
+  <div id="chat">
     <div id="messagediv">
       <ul id="messages"></ul>
     </div>
@@ -16,6 +17,7 @@
       <input id="msg" autocomplete="off" /><button>Send</button>
     </form>
   </div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
@@ -68,5 +70,6 @@
       .append(li);
   });
 </script>
+
   </body>
 </html>

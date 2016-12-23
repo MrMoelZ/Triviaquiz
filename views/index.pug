@@ -1,0 +1,11 @@
+extends layout.pug
+block title
+  title=title
+block content
+  - for (entry of entries)
+    .container
+      .header
+        .title=entry.title||'no title'
+        .timestamp=entry.timestamp||0
+      .content=entry.text||'no text'
+    

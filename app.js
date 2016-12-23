@@ -1,41 +1,108 @@
 var express = require('express');
 var app = express();
+var session = require('express-session');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var fs = require('fs');
+var passport = require('passport');
+var bodyParser = require('body-parser');
+var flash = require('connect-flash');
+var LocalStrategy = require('passport-local').Strategy;
+var moment = require('moment');
 
 var lobby = [];
 
 var db = require('./db');
 var quiz = require('./quiz');
 
+//DEBUG
+var theUser = {name:'asd',password:'test'};
+
+passport.use('local',new LocalStrategy(
+	function(username,password,done) {
+		//db.find('user',)
+		//DEBUG
+		if(username==theUser.name && password==theUser.password){
+			console.log('login success',username,password);
+			//DEBUG
+			return done(null,{name:'hans',pw:'hidden'});
+		} 
+		else {
+			console.log('login failed',username,password);
+			return done(null,false);
+		} 
+	}
+));
+
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
+
+function ensureAuthenticated(req,res,next) {
+	if(req.isAuthenticated()) return next();
+	else {
+		console.log('not authenticated');
+		res.redirect('/');
+	} 
+}
 
 
-//express.static.mime.define({'text/css': ['md']});
-
+//app.use(express.cookieSession({key:'app.sess',secret:'test'}));
+app.use(session({secret:'secret',cookie:{maxAge:60000}}));
+app.use(flash());
+app.use(bodyParser());
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static('files'));
-//app.use(express.static('scripts'));
 
+app.set('view engine', 'pug');
+app.set ('views','./views');
+
+// public
 app.get('/', function(req, res){
-	res.set('X-Content-Type-Options', 'nosniff');
-	res.sendFile(__dirname+'\\index.html');
+	// res.set('X-Content-Type-Options', 'nosniff');
+	// db get newsentries
+	var xkcd=[{title:'asd',text:'Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!Dies ist ein Test, asd!',timestamp:moment().format('DD.MM.YYYY - HH:mm [Uhr]')},{title:'cfd'},{text:'ggg'}];
+	res.render('index',{title:'ROFLOMG Quizzer',message:'Merlin ist supertoll!',session:req.session,entries:xkcd})
 });
 
-app.get('/vue',function(req,res){
-	res.sendFile(__dirname+'/vue.html');
+app.get('/about',function(req,res) {
+	res.render('about.pug',{title:'About',message:'Here be info',session:req.session});
 });
 
-app.get('/trivia',function(req,res){
-	res.sendFile(__dirname+'\\trivia.html');
+
+// needs authentication
+app.get('/game',ensureAuthenticated,function(req,res) {
+	res.render('game.pug',{title:'GAME',message:'Welcome to the game',session:req.session});
 });
 
-app.get('/user/:name',function(req,res,name){
-	console.log(name);
-	res.send('not implementerino yet');
+app.get('/account',ensureAuthenticated,function(req,res) {
+	res.render('account.pug',{title:'Account',message:'Here be account',session:req.session});
 });
 
+//TO IMPLEMENT STATISTIKEN, WERKSTATT
+
+//login/out
+app.post('/login',passport.authenticate('local',{failureRedirect:'/',successRedirect:'/game'}));
+
+app.get('/logout',function(req,res) {
+	console.log('logout');
+	req.logout();
+	console.log(req.session);
+	res.redirect('/');
+});
+
+
+
+//quiz handling
 quiz.setIo(io);
 
+
+//socket stuff
 io.on('connection', function(socket){
 	console.log('connected', socket.id);
 	io.to(socket.id).emit('lobby_list',lobby);
