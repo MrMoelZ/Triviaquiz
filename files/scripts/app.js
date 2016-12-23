@@ -1,4 +1,8 @@
 (function () { 'use strict'
+
+  var getData = function() {
+    console.log('getdata');
+  }
   var createApp = function () {
     // ---------------------
     // BEGIN NORMAL APP CODE
@@ -7,8 +11,9 @@
     // node with the id "app", so that the client-side
     // version can take over once it loads.
      Vue.component('test', {
-  template: '<div>test!</div>'
-});
+        template: '<div>test!</div>'
+      });
+      getData();
 
     return new Vue({
       template: '<div id="app"><test></test><span>You</span> have been here for {{ counter }} seconds.</div>',
@@ -23,10 +28,15 @@
         }, 1000)
       }
     });
+  }
+
+
     // -------------------
     // END NORMAL APP CODE
     // -------------------
-  }
+
+    console.log('this is app.js');
+    //getData();
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = createApp
   } else {

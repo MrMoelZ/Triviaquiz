@@ -143,6 +143,10 @@ io.on('connection', function(socket){
 			});
   		}
   	});
+	socket.on('merlin',function(data) {
+		console.log(data);
+	});
+
   	socket.on('disconnect',function() {
   		console.log('disconnected',socket.id);
   		var ix = lobby.findIndex(e=>e.id == socket.id);

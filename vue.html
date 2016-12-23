@@ -11,8 +11,14 @@
   <div id="v">      
         <navigation></navigation>
     </div>
-  <script src="scripts/app.js"></script>
-  <script>app.$mount('#app');</script>
+  <!--<script src="scripts/app.js"></script>-->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+    console.log('connected');
+    socket.emit('merlin','asd');
+  </script>
+  <!--<script>app.$mount('#app');</script>-->
   <script>
   Vue.component('navigation', {
   template: '<div>Here be nav</div>'

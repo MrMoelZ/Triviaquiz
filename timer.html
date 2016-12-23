@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <title>ROFLOMG Triviaquiz - timerVersion</title>
+    <link rel="stylesheet" href="/style.css" type="text/css">
+  </head>
+  <body>
+  <div id="lobby">
+    <span class="bold">Lobby</span>
+  </div>
+  <div id="area">
+    <div id="messagediv">
+      <ul id="messages"></ul>
+    </div>
+    <form action="">
+      <input id="msg" autocomplete="off" /><button>Send</button>
+    </form>
+  </div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+  var user = "";
+  do {
+    user = prompt('Bitte Namen eingeben',user);
+  }while(user == "");
+  var socket = io();
+
+  function addUser(user) {
+    //let usr = $("<p>").append($("<a href='"+user+"'>").text(user));
+    let usr = $("<p>").text(user.name+' '+user.pts);
+    $('#lobby').append(usr);
+  }
+
+  function clearLobby() {
+    console.log('clear');
+    $('#lobby').text('');
+    $('#lobby').append($("<span class='bold'>").text("Lobby"));
+  }
+
+  socket.on('lobby_list',function(list){
+    clearLobby();
+    for(usr of list) {
+      addUser(usr);
+    }
+  });
+  socket.on('connect',function(){
+    socket.emit('register',user);
+  });
+  socket.on('lobby_add',function(user) {
+    addUser(user);
+  });
+  socket.on('confirm',function(confirmed) {
+    if(!confirmed) window.reload();
+  });
+  $('form').submit(function(){
+    let msg = $('#msg').val();
+    let obj = {'message':msg, 'sender':user};
+    socket.emit('chat message', {'message':msg, 'sender':user});
+    $('#msg').val('');
+    return false;
+  });
+  socket.on('chat message', function(msg){
+    let li = $("<li>").append($("<span class='sender'>").text(msg.sender+': ')).append($("<span class='msg'>").text(msg.message));
+    if(msg.sender == 'Quizmaster') {
+        li.addClass('quizmaster');
+      }
+    $('#messages')
+      .append(li);
+  });
+</script>
+  </body>
+</html>
