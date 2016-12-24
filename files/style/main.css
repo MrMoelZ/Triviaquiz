@@ -27,6 +27,7 @@ body {
 }
 
 .loginpopout {
+	z-index:99;
 	position:absolute;
 	height:12%;
 	width:15%;
@@ -61,6 +62,7 @@ body {
 	margin:2% 5% 0 5%;
 	border:1px solid black;
 	border-radius: 15px;
+	position:relative;
 }
 
 .container .header {
@@ -72,8 +74,12 @@ body {
 	border-top-right-radius:15px;
 }
 .container .header .timestamp {
-	padding-right:15px;
-	width:30%;
+	/*padding-right:15px;*/
+	/*width:30%;*/
+	position:absolute;
+	top:5px;
+	right:15px;
+	font-size:0.9em;
 }
 
 .container .header .title {

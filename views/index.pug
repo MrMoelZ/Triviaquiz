@@ -7,5 +7,5 @@ block content
       .header
         .title=entry.title||'no title'
         .timestamp=entry.timestamp||0
-      .content=entry.text||'no text'
+      .content!=entry.text||'no text'
     
