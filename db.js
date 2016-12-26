@@ -35,6 +35,13 @@ exports.insert = function(collection,data,cb) {
 }
 
 
-exports.db = function() {
-	console.log('hello from db');
+exports.delete = function(collection,query,cb) {
+	MongoClient.connect(url, function (err,db) {
+		if(err) console.log(err);
+		var coll = db.collection(collection);
+		coll.delete(query,function(err,res){
+			if(err) console.log(err);
+			cb(res);
+		});
+
 }

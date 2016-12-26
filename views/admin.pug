@@ -1,0 +1,62 @@
+extends layout
+block title
+  title=title
+block content
+  .manageUser
+    .users.area
+      h2 Vorhandene User
+      table
+        thead
+          tr
+            td #
+            td Username
+            td Email
+            td Mitglied seit
+            td Admin
+            td löschen
+        tbody
+          each user,index in users
+            tr
+              td=index+1
+              td=user.name
+              td=user.email
+              td=user.uuid
+              if user.isAdmin
+                td X
+              else
+                td
+              td
+                form(action="deleteuser" method="POST")
+                  input(type="hidden" name="id" value=user.uuid)
+                  button(type="submit") löschen
+    .addUser.area
+      h2 User hinzufügen
+      form(action="admin" method="POST")
+        input(type="hidden" name="type" value="user")
+        input(type="text" name="username" placeholder="Name")
+        input(type="text" name="password" placeholder="Passwort")
+        input(type="text" name="email" placeholder="E-Mail")
+        |Admin
+        input(type="checkbox" name="admin")
+        button(type="submit") OK
+  .manageQuestions
+    if questions
+      |Questioncount #{questions.length}
+    .addQuestion.area
+      h2 Frage hinzufügen:
+      form(action="admin" method="POST")
+        input(type="hidden" name="type" value="question")
+        input(type="text" name="question" placeholder="Frage")
+        input(type="text" name="correctAnswer" placeholder="richtige Antwort")
+        input(type="text" name="package" placeholder="Paket")
+        button(type="submit") OK
+  .manageNews
+    .addNews.area
+      h2 News posten:
+      form(action="admin" method="POST")
+        input(type="hidden" name="type" value="news")
+        input(type="text" name="title" placeholder="Titel")
+        br
+        textarea(name="newstext" placeholder="News" rows=5)
+        br
+        button(type="submit") OK
