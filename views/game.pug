@@ -3,4 +3,29 @@ block title
   title=title
 block content
   h1=message
-  
+  .quizmaster
+    .startGame
+    .question
+
+    .info
+  .answer
+    input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
+    button(type="submit" id="answerbutton") OK
+  .chat
+    input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
+    button(type="submit" id="answerbutton")
+      i(class="material-icons") send
+  .lobby
+block scripts
+  script(type="text/javascript").
+    var socket = io();
+    socket.on('connect',function() {
+      console.log('connect!');
+    });
+    $('#answerbutton').on('click',sendAnswer);
+
+    function sendAnswer() {
+      var answer = $('#answertext').val();
+      console.log('sendAnswer',answer);
+      socket.emit('answer',answer);
+    }

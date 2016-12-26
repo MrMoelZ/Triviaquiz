@@ -9,17 +9,24 @@ var lobby=null;
 
 
 var questionPool = [
-	{'q':'Wer war der erste Mann auf dem Mond?','a':'Neil Armstrong'},
-	{'q':'Wie heißt der innerste Planet des Sonnensystems?','a':'Merkur'},
-	{'q':'Wieviele Bundesländer hat Deutschland (Zahl)?','a':'16'}
+	{'question':'Wer war der erste Mann auf dem Mond?','correctAnswer':'Neil Armstrong'},
+	{'question':'Wie heißt der innerste Planet des Sonnensystems?','correctAnswer':'Merkur'},
+	{'question':'Wieviele Bundesländer hat Deutschland (Zahl)?','correctAnswer':'16'}
 ];
 
-
+var users;
 var questions;
 
 rand = 0;
 
 
+exports.setUsers = function(users) {
+		users = users;
+}
+
+exports.setQuestionPool = function(questions) {
+	questionPool = questions;
+}
 
 exports.setIo = function(socketio) {
 	io=socketio;
@@ -47,16 +54,22 @@ exports.LoadQuestions = function() {
 function askQuestion () {
 	rand = Math.round(Math.random()*(questions.length-1))
 	console.log('askQuestion ',rand);
-	setTimeout(function() {
-		io.emit('chat message',{
-			'message':questions[rand].q,
-			'sender':'Quizmaster'})
-	},1500);
+	io.emit('quiz_q',questions[rand].question);
+	io.emit('chat message',{
+			'message':questions[rand].question,
+			'sender':'Quizmaster'});
 }
 
 exports.askQuestion = askQuestion;
 
+exports.checkAnswer = function(answer,userid) {
+	console.log('in checkanswer ',answer.toLowerCase)
+		if(answer.toLowerCase() === questions[rand].correctAnswer) {
+			users.find(e=>e.uuid == userid).pts.currentPoints+=1;
+		}
+}
 
+/*
 exports.checkAnswer = function(msg,usr) {
 	console.log(msg.sender,' answered ',msg.message);
 	if(msg.message.toLowerCase() == questions[rand].a.toLowerCase()) {
@@ -88,9 +101,9 @@ exports.checkAnswer = function(msg,usr) {
 		{
 			'message':'Leider falsch',
 			'sender':'Quizmaster'
-		});	
+		});
 	}
-}
+}*/
 
 
 exports.startQuiz = function() {
@@ -98,5 +111,6 @@ exports.startQuiz = function() {
 	questions = questionPool;
 	console.log('Quiz started');
 	io.emit('chat message',{'message':'Quiz gestartet', 'sender':'Quizmaster'});
+	io.emit('quiz_info','started')
 	askQuestion();
 }

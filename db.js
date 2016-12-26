@@ -1,7 +1,6 @@
 var MongoClient = require('mongodb').MongoClient;
 
 var url='mongodb://localhost:27017/Trivia';
-//var url='mongodb://localhost:27017/test';
 
 exports.find = function(collection,query,cb) {
 	MongoClient.connect(url, function (err,db) {
@@ -31,6 +30,7 @@ exports.insert = function(collection,data,cb) {
 				cb(res);
 			});
 		}
+		db.close();
 	});
 }
 
@@ -43,5 +43,6 @@ exports.delete = function(collection,query,cb) {
 			if(err) console.log(err);
 			cb(res);
 		});
-
+		db.close();
+	});
 }

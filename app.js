@@ -11,9 +11,11 @@ var LocalStrategy = require('passport-local').Strategy;
 var moment = require('moment');
 
 var lobby = [];
+var users = [];
 
 var db = require('./db');
 var quiz = require('./quiz');
+
 
 
 //DEBUG
@@ -91,7 +93,8 @@ app.get('/about', function (req, res) {
 
 
 // needs authentication
-app.get('/game', ensureAuthenticated, function (req, res) {
+//ensureAuthenticated,
+app.get('/game', function (req, res) {
 	res.render('game.pug', { title: 'GAME', message: 'Welcome to the game', session: req.session });
 });
 
@@ -100,11 +103,12 @@ app.get('/account', ensureAuthenticated, function (req, res) {
 });
 
 //ADMIN!
-//app.get('/admin',ensureAuthenticated,ensureAdmin, function (req, res) {
-app.get('/admin', function (req, res) {
+app.get('/admin',ensureAuthenticated,ensureAdmin, function (req, res) {
+//app.get('/admin', function (req, res) {
 	//insert('news', { title: 'Hallo', timestamp: new Date(), text: 'Dies ist die allererste alpha Version des neuen ROFLOMG Quizzers. Funktionalitäten sind praktisch keine vorhanden.<br/>Changelog gibts mit dem ersten wirklich spielbaren Release, dies ist eher ein Datenbank / Performance check.<br/>Glhf' });
 	//insert('user',{name:'MrMoelZ',isAdmin:false,password:'1337',email:'',pts:{total:0,thisSession:0,thisGame:0}});
-	var user= {name:'MrMoelZ',isAdmin:true,password:'1337',email:'test@asd.de',pts:{total:0,thisSession:0,thisGame:0},uuid:'assadfsadfasdfasdfsadf'};
+	//var user= {name:'MrMoelZ',isAdmin:true,password:'1337',email:'test@asd.de',pts:{total:0,thisSession:0,thisGame:0},uuid:'assadfsadfasdfasdfsadf'};
+	// TODO get users,questioncount(?)
 	res.render('admin.pug',{ title: 'Admin', message: 'Hello Admin', session: req.session,users:[user] })
 })
 
@@ -161,6 +165,7 @@ var cleanUpTimestamp = function(d) {
 
 //quiz handling
 quiz.setIo(io);
+quiz.setUsers(users);
 
 
 //socket stuff
@@ -181,6 +186,11 @@ io.on('connection', function (socket) {
 			io.emit('lobby_add', usr);
 		}
 	});
+
+	socket.on('answer',function(answer){
+		quiz.checkAnswer(answer,req.user.uuid);
+	});
+	
 	socket.on('chat message', function (msg) {
 		var usr = lobby.find(e => e.name == msg.sender);
 
