@@ -5,24 +5,104 @@ block content
   h1=message
   .quizmaster
     .startGame
+      span Here be game
     .question
-
+      span here be question
     .info
+      span here be info
   .answer
     input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
     button(type="submit" id="answerbutton") OK
+  .chatheader
+    span() Chat
+    span(id="newmsgcounter" class="hidden") 
+    span(id="minimizeChat") _
   .chat
-    input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
-    button(type="submit" id="answerbutton")
+    div(class="messages" id="messages")
+      if messages
+        each msg in messages
+          p(class="sender-"+msg.sender)
+            img(src='/avatars/'+msg.sender+'.jpg')
+            span(class="sender")=msg.sender
+            span(class="timestamp") 
+              if msg.timestamp.getHours()<10
+                |0
+              |#{msg.timestamp.getHours()}:
+              if msg.timestamp.getMinutes()<10
+                |0
+              |#{msg.timestamp.getMinutes()}
+              | - 
+            span(class="message")=msg.msg
+  .chatfooter
+    input(type="text" id="chattext" name="chatmsg" placeholder="Chat" tabindex=2)
+    button(type="submit" id="chatbutton")
       i(class="material-icons") send
   .lobby
+    table
+      thead
+        tr
+          td Name
+          td Punkte
+      tbody
+        if lobby && lobby.length > 0
+          each user in lobby
+            tr
+              td user.name
+              td user.pts.thisGame
 block scripts
   script(type="text/javascript").
+    var session =!{JSON.stringify(session)}
+    var newMsgs = 0;
+    var chatHidden = false;
     var socket = io();
     socket.on('connect',function() {
+      // for each sender, get random color 
+      $('.sender-Admin').css("background-color","#f4a78e");
+      scroll();
+      
       console.log('connect!');
     });
+    socket.on('chat message',function(m){
+      var message = $('<span>'+m.msg+'</span>').addClass("message").addClass("sender-"+m.sender);
+      var sender = $('<span>'+m.sender+' </span>').addClass("sender");
+      var h = new Date(m.timestamp).getHours();
+      var min = new Date(m.timestamp).getMinutes();
+      var time = (h<10?'0'+h:h)+':'+(min<10?'0'+min:min);
+      var timestamp = $('<span>'+time+' - </span>').addClass("timestamp");
+      var img = $('<img src="/avatars/'+m.sender+'.jpg">');
+      $('#messages').append($("<p>").append(img).append(sender).append(timestamp).append(message));
+      if(chatHidden) {
+        newMsgs++;
+        $('#newmsgcounter').html(newMsgs);
+      }
+      else scroll();
+    });
     $('#answerbutton').on('click',sendAnswer);
+    $('#chatbutton').on('click',sendMsg);
+    $('#minimizeChat').on('click',minimizeChat);
+
+    function scroll() {
+      $('.chat').animate({ scrollTop:$('#messages').height() }, "fast");
+      return false;
+    }
+
+    function minimizeChat() {
+      $('.chat').toggleClass("hidden");
+      $('.chatfooter').toggleClass("hidden");
+      $('.chatheader').toggleClass("bottom-right");
+      $('#newmsgcounter').toggleClass("hidden");
+      chatHidden = !chatHidden;
+      if(!chatHidden) {
+        $('#newmsgcounter').html('');
+        newMsgs = 0;
+        scroll();
+      }
+    }
+
+    function sendMsg() {
+      var msg = $('#chattext').val();
+      socket.emit('chat message',{msg:msg,sender:session.passport.user.name});
+    }
 
     function sendAnswer() {
       var answer = $('#answertext').val();

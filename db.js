@@ -34,12 +34,24 @@ exports.insert = function(collection,data,cb) {
 	});
 }
 
+//NOT TESTED
+exports.update = function(collection,query,data,cb) {
+	MongoClient.connect(url,function(err,db){
+		if(err) console.log(err);
+		var coll = db.collection(collection);
+		coll.update(query,{$set:data},function(err,res){
+			if(err) console.log(err);
+			cb(res);
+		})
+	})
+}
+
 
 exports.delete = function(collection,query,cb) {
 	MongoClient.connect(url, function (err,db) {
 		if(err) console.log(err);
 		var coll = db.collection(collection);
-		coll.delete(query,function(err,res){
+		coll.remove(query,function(err,res){
 			if(err) console.log(err);
 			cb(res);
 		});
