@@ -218,6 +218,9 @@ textarea {
 	min-height:14px;
 	min-width:14px;
 	line-height: 4px;
+}
+
+.noselect {
 	cursor:default;
 	-webkit-user-select: none;  /* Chrome all / Safari all */
   	-moz-user-select: none;     /* Firefox all */
@@ -228,9 +231,11 @@ textarea {
 .chatheader #newmsgcounter{
 	border-radius:10px;
 	position:relative;
-	height:10px;
-	width:10px;
-	margin-right: 100px;
+	float:left;
+	height:22px;
+	width:22px;
+	margin-left:20px;
+	margin-top:2px;
 	background-color:#ddd;
 	color:#000
 }
@@ -248,7 +253,7 @@ textarea {
 	margin-right:3px;
 	padding-left:5px;
 	padding-right:5px;
-	width:80%;
+	width:75%;
 	border:none;
 	border-radius:10px;
 }
@@ -272,23 +277,76 @@ p {
 	margin:0;
 }
 
+#lobbyheader{
+	position:absolute;
+	top:10%;
+	right:0;
+	width:20%;
+	min-height:3%;
+	background-color:#333;
+	color:#fff;
+	text-align: center;
+	border-top-left-radius: 15px;
+	border-top-right-radius: 15px;
+}
+
 #lobby {
 	position:absolute;
-	top:0;
+	top:13%;
 	right:0;
 	height:auto;
 	max-height:50%;
-	width:30%;
+	width:20%;
 	background-color:#eeeeee;
-	border:1px solid black;
+	color:#000;
+}
+
+#lobby table{
+	margin:5px;
+}
+
+#lobby tr:first-child td{
+	width:90%;
+	min-width:90%;
 }
 
 .sender {
 	font-weight: bold;
 }
 
-.quizmaster {
+.quiz {
+	width:60%;
+	margin: 2% 5% 2% 5%;
 	color:#ff0000;
+	border:1px solid white;
+	position:relative;
+}
+
+#quizheader{
+	margin: 1%;
+	font-size:2.5em;
+	font-weight:bold;
+	color:#fff;
+}
+
+#question {
+	color:#FA7F24;
+}
+
+#answer {
+	color:#93CF20;
+}
+
+#hint {
+
+}
+
+#info {
+	font-size:0.8em;
+	color:#eee;
+	position:absolute;
+	right:5px;
+	bottom:5px;
 }
 
 #messagediv {

@@ -1,30 +1,33 @@
 extends layout
 block title
   title=title
+
 block content
   h1=message
-  .quizmaster
-    .startGame
-      span Here be game
-    .question
-      span here be question
-    .info
-      span here be info
-  .answer
-    input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
-    button(type="submit" id="answerbutton") OK
-  .chatheader
-    span() Chat
-    span(id="newmsgcounter" class="hidden") 
-    span(id="minimizeChat") _
+  .quiz
+    div(id="quizheader")
+      span Quiz - 
+      span(id="quizround")
+    div(id='startGame')
+      button(type="submit" id="startGameButton") Quiz starten
+    div(id='question')
+    div(id='answer')
+    div(id='hint')
+    div(id='info')
+    .answer
+      input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
+      button(type="submit" id="answerbutton") OK
+  .chatheader(class="noselect") Chat
+    span(id="newmsgcounter" class="hidden noselect") 
+    span(id="minimizeChat" class="noselect") _
   .chat
     div(class="messages" id="messages")
       if messages
         each msg in messages
           p(class="sender-"+msg.sender)
-            img(src='/avatars/'+msg.sender+'.jpg')
-            span(class="sender")=msg.sender
-            span(class="timestamp") 
+            img(src='/avatars/'+msg.sender+'.jpg' class="noselect")
+            span(class="sender noselect")=msg.sender
+            span(class="timestamp noselect") 
               if msg.timestamp.getHours()<10
                 |0
               |#{msg.timestamp.getHours()}:
@@ -37,49 +40,108 @@ block content
     input(type="text" id="chattext" name="chatmsg" placeholder="Chat" tabindex=2)
     button(type="submit" id="chatbutton")
       i(class="material-icons") send
-  .lobby
+  div(id="lobbyheader") Lobby
+  div(id="lobby")
     table
       thead
         tr
           td Name
           td Punkte
-      tbody
-        if lobby && lobby.length > 0
-          each user in lobby
-            tr
-              td user.name
-              td user.pts.thisGame
+          td(class="hidden") ID
+      tbody(id="lobbyTable")
+
 block scripts
   script(type="text/javascript").
     var session =!{JSON.stringify(session)}
     var newMsgs = 0;
+    var maxQuestions=10;
     var chatHidden = false;
     var socket = io();
     socket.on('connect',function() {
       // for each sender, get random color 
-      $('.sender-Admin').css("background-color","#f4a78e");
+      //colorChat();
       scroll();
-      
       console.log('connect!');
+      socket.emit('register',{name:session.passport.user.name,pts:session.passport.user.pts});
     });
+    // GAME
+    socket.on('quiz_info',function(info){
+      $('#info').append("span").html(info);
+    });
+    socket.on('quiz_q',function(data){
+      $('#quizround').html(" Frage "+data.count+"/"+maxQuestions);
+      $('#question').append("<span>"+data.q+"</span><br/>");
+    });
+    socket.on('quiz_a',function(answer){
+      $('#answer').append("<span>"+answer+"</span>");
+    });
+    socket.on('quiz_h',function(hint){
+      $('#hint').append("<span>"+hint+"</span>");
+    });
+
+    // LOBBY
+    socket.on('lobby_list',function(list){
+      $('#lobbyTable').html('');
+      console.log('lobbylist',list);
+      if(navigator.userAgent.indexOf("Firefox") != -1 ){
+        console.log('firefox');
+      }
+      if(navigator.userAgent.indexOf("MSIE") != -1  || (!!document.documentMode == true )){
+        console.log('IE');
+      }
+      list.forEach(function(user){
+        addUsertoLobby(user);
+      })
+      //- else {
+      //-     for(user of list) {
+      //-      addUsertoLobby(user);
+      //-   }
+      //- }
+    });
+    socket.on('lobby_add',function(user){
+      console.log('lobby add',user);
+      addUsertoLobby(user);
+    });
+
+    // CHAT
     socket.on('chat message',function(m){
       var message = $('<span>'+m.msg+'</span>').addClass("message").addClass("sender-"+m.sender);
-      var sender = $('<span>'+m.sender+' </span>').addClass("sender");
+      var sender = $('<span>'+m.sender+' </span>').addClass("sender").addClass("noselect");
       var h = new Date(m.timestamp).getHours();
       var min = new Date(m.timestamp).getMinutes();
       var time = (h<10?'0'+h:h)+':'+(min<10?'0'+min:min);
-      var timestamp = $('<span>'+time+' - </span>').addClass("timestamp");
-      var img = $('<img src="/avatars/'+m.sender+'.jpg">');
+      var timestamp = $('<span>'+time+' - </span>').addClass("timestamp").addClass("noselect");
+      var img = $('<img src="/avatars/'+m.sender+'.jpg">').addClass("noselect");
       $('#messages').append($("<p>").append(img).append(sender).append(timestamp).append(message));
       if(chatHidden) {
-        newMsgs++;
-        $('#newmsgcounter').html(newMsgs);
+        if(newMsgs++<99)
+          $('#newmsgcounter').html(newMsgs);
+        else
+          $('#newmsgcounter').html('++');
       }
       else scroll();
     });
+    // click bindings
     $('#answerbutton').on('click',sendAnswer);
     $('#chatbutton').on('click',sendMsg);
     $('#minimizeChat').on('click',minimizeChat);
+    $('#startGameButton').on('click',startGame);
+
+    // functions
+    function startGame() {
+      socket.emit('start_request',session.passport.user.name);
+    }
+
+    function colorChat() {
+      $('.sender-Admin').css("background-color","#f4a78e");
+    }
+
+    function addUsertoLobby(user) {
+      var name = $("<td>").html(user.name);
+      var pts = $("<td>").html(user.pts);
+      var id = $("<td>").html(user.id).addClass("hidden");
+      $('#lobbyTable').append($("<tr>").append(name).append(pts).append(id));
+    }
 
     function scroll() {
       $('.chat').animate({ scrollTop:$('#messages').height() }, "fast");
@@ -106,6 +168,7 @@ block scripts
 
     function sendAnswer() {
       var answer = $('#answertext').val();
+      console.log(session.passport.user);
       console.log('sendAnswer',answer);
-      socket.emit('answer',answer);
+      socket.emit('answer',{answer:answer,userid:session.passport.user._id});
     }

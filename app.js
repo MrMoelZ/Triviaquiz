@@ -91,8 +91,16 @@ app.get('/about', function (req, res) {
 //needs authentication
 
 app.get('/game',ensureAuthenticated, function (req, res) {
-	db.find('messages',{},function(data){
-		res.render('game.pug', { title: 'GAME', message: 'Welcome to the game', session: req.session, messages: data });
+	//set users
+	db.find('user',{},function(udata) {
+		console.log(udata);
+		users = udata;
+		//quiz handling
+		quiz.setIo(io);
+		quiz.setUsers(users);
+		db.find('messages',{},function(data){
+			res.render('game.pug', { title: 'GAME', message: 'Welcome to the game', session: req.session, messages: data });
+		});
 	});
 });
 
@@ -166,61 +174,39 @@ var cleanUpTimestamp = function(d) {
 }
 
 
-
-//quiz handling
-quiz.setIo(io);
-quiz.setUsers(users);
-
-
 //socket stuff
 io.on('connection', function (socket) {
 	console.log('connected', socket.id);
 	io.to(socket.id).emit('lobby_list', lobby);
 	socket.on('register', function (user) {
-		if (lobby.find(e => e.name == user)) {
-			console.log('username exists ', user);
-			// emit reject to requesting client
-		}
-		else {
-			var usr = { 'name': user, 'id': socket.id, 'pts': 0 };
-			// emit confirm to requesting client
-			console.log(user, ' registered with id ', socket.id);
+		if (!(lobby.find(e => e.name == user.name))) {
+			var usr = {name:user.name,id:socket.id,pts:user.pts.currentGame};
 			lobby.push(usr);
-			console.log(JSON.stringify(lobby));
+			console.log(usr.name, ' registered with id ', usr.id);
 			io.emit('lobby_add', usr);
 		}
 	});
 
+	socket.on('start_request',function() {
+		console.log('start request');
+		quiz.startQuiz();
+	});
+
 	socket.on('answer',function(answer){
-		quiz.checkAnswer(answer,req.user._id);
+		console.log(answer.answer,answer.userid);
+		quiz.checkAnswer(answer.answer,answer.userid);
 	});
 	
 	socket.on('chat message', function (m) {
 		// save msg to db
 		var message = {msg:m.msg,sender:m.sender,timestamp:new Date()};
 		insert('messages',message);
-		console.log('message: ', m);
+		// console.log('message: ', m);
 		// emit msg to all
 		io.emit('chat message', message);
-
-		// console.log('quiz active ', quiz.active);
-		// if (quiz.active == true) {
-		// 	quiz.checkAnswer(msg, usr);
-		// }
-		// if (msg.message == '/start') {
-		// 	quiz.active = true;
-		// 	quiz.startQuiz();
-		// }
-		// else if (msg.message == '/stop') {
-		// 	quiz.deactivate();
-		// 	io.emit('chat message',
-		// 		{
-		// 			'message': 'Quiz beendet',
-		// 			'sender': 'Quizmaster'
-		// 		});
-		// }
 	});
-	socket.on('merlin', function (data) {
+
+	socket.on('test', function (data) {
 		console.log(data);
 	});
 
