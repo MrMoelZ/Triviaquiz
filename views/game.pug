@@ -6,10 +6,19 @@ block content
   h1=message
   .quiz
     div(id="quizheader")
-      span Quiz - 
+      span Quiz
+      br
       span(id="quizround")
     div(id='startGame')
       button(type="submit" id="startGameButton") Quiz starten
+    table(class="gameTable")
+      thead
+        tr
+          td Runde
+          td Frage
+          td Antwort
+          td gegeben von
+      tbody(class="gameTableBody")
     div(id='question')
     div(id='answer')
     div(id='hint')
@@ -53,8 +62,11 @@ block content
 block scripts
   script(type="text/javascript").
     var session =!{JSON.stringify(session)}
+    var quiz =!{JSON.stringify(quiz)}
     var newMsgs = 0;
-    var maxQuestions=10;
+    var question="";
+    var round=0;
+    var gameLength=quiz.gameLength;
     var chatHidden = false;
     var socket = io();
     socket.on('connect',function() {
@@ -69,14 +81,23 @@ block scripts
       $('#info').append("span").html(info);
     });
     socket.on('quiz_q',function(data){
-      $('#quizround').html(" Frage "+data.count+"/"+maxQuestions);
-      $('#question').append("<span>"+data.q+"</span><br/>");
+      question = data.q;
+      round = data.count;
+      $('#quizround').html(" Frage "+round+"/"+gameLength);
+      $('#question').html("<span>"+question+"</span>");
     });
     socket.on('quiz_a',function(answer){
-      $('#answer').append("<span>"+answer+"</span>");
+      console.log('quiz_a');
+      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td>"+answer+"</td>"))
+      $('#answer').append("<span>"+answer+"</span><br/>");
     });
     socket.on('quiz_h',function(hint){
       $('#hint').append("<span>"+hint+"</span>");
+    });
+    socket.on('quiz_reset',function(){
+      question = null;
+      round = 0;
+      console.log('reset');
     });
 
     // LOBBY

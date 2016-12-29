@@ -14,7 +14,7 @@ html(class="no-js")
         a(href='#' class="disabled") Statistiken
         a(href='#' class="disabled") Werkstatt
         a(href='/account') Account
-        if session.passport && session.passport.user
+        if session && session.passport && session.passport.user
             a(href='/logout' id="logout") Logout
         else
             a(href='#' id="login") Login

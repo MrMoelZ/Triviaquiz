@@ -27,30 +27,38 @@ textarea {
 	font-size:0.85em;
 }
 
-.area {
-	margin-left:2%;
-	margin-right:2%;
+p {
+	padding:0;
+	margin:0;
 }
 
-.area input {
-	margin-right:10px;
+
+/* HELPERS */
+.superbig {
+	font-size: 4em;
 }
 
-.addNews button {
-	margin-top:8px;
-	margin-right:20%;
-	width:10%;
-	float:right;
-}
-
-.addNews input, .addNews textarea{
-	width:80%;
-	margin-top:8px;
+.center {
+	text-align: center;
 }
 
 .bold {
 	font-weight: bold;
 }
+
+.hide {
+	display:none;
+}
+
+.hidden {
+	display:none;
+}
+
+
+.disabled {
+	color:#333333 !important;
+}
+/**/
 
 .navcontainer {
 	z-index:999;
@@ -94,9 +102,29 @@ textarea {
 	width:50%;
 }
 
-.hide {
-	display:none;
+
+.area {
+	margin-left:2%;
+	margin-right:2%;
 }
+
+.area input {
+	margin-right:10px;
+}
+
+.addNews button {
+	margin-top:8px;
+	margin-right:20%;
+	width:10%;
+	float:right;
+}
+
+.addNews input, .addNews textarea{
+	width:80%;
+	margin-top:8px;
+}
+
+
 
 .container {
 	margin:2% 5% 0 5%;
@@ -165,12 +193,7 @@ textarea {
 	clear:both;
 }
 
-.disabled {
-	color:#333333 !important;
-}
 
-#messages {
-}
 
 .chat {
 	background-color:#666;
@@ -183,13 +206,6 @@ textarea {
 	max-height:50%;
 	overflow-y:scroll;
 	/*overflow-x:scroll;*/
-}
-
-.chat p {
-}
-
-.hidden {
-	display:none;
 }
 
 .bottom-right {
@@ -262,19 +278,10 @@ textarea {
 	width:14%;
 }
 
-.chat p {
-
-}
-
 .chat p img{
 	height:30px;
 	width:30px;
 	border-radius:30px;
-}
-
-p {
-	padding:0;
-	margin:0;
 }
 
 #lobbyheader{
@@ -327,6 +334,7 @@ p {
 	font-size:2.5em;
 	font-weight:bold;
 	color:#fff;
+	text-align:center;
 }
 
 #question {
@@ -337,9 +345,6 @@ p {
 	color:#93CF20;
 }
 
-#hint {
-
-}
 
 #info {
 	font-size:0.8em;
