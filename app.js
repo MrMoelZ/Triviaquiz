@@ -92,6 +92,8 @@ app.set('views', './views');
 // public routes
 app.get('/', function (req, res) {
 	// res.set('X-Content-Type-Options', 'nosniff');
+	db.test('asd',{a:34});
+	console.log('asd');
 	db.find('news', {}, function (data) {
 		if (!data) {
 			res.send('ERROR NO DATABASE CONNECTION');
@@ -200,7 +202,7 @@ io.on('connection', function (socket) {
 	io.to(socket.id).emit('lobby_list', lobby);
 	socket.on('register', function (user) {
 		if (!(lobby.find(e => e.name == user.name))) {
-			var usr = { name: user.name, id: socket.id, pts: user.pts.currentGame };
+			let usr = { name: user.name, id: socket.id, pts: user.pts.currentGame };
 			lobby.push(usr);
 			console.log(usr.name, ' registered with id ', usr.id);
 			io.emit('lobby_add', usr);

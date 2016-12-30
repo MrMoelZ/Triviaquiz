@@ -51,39 +51,53 @@ exports.insert = function (collection, data, cb) {
 	});
 }
 
+exports.test = function (collection, data) {
+	MongoClient.connect(url, function (err, db) {
+		var collection = db.collection('test');
+		collection.insertOne({ a: 3 }).then(function (result) {
+			collection.find({}).toArray().then(function (docs) {
+				console.log('in test ', docs);
+				db.close();
+			}).catch(function (err) {
+				console.log(err.stack);
+			});
+		});
+	});
+}
+
 //NOT TESTED
 exports.update = function (collection, query, data, cb) {
-	MongoClient.connect(url, function (err, db) {
-		if (err) {
-			errorHandling(err, cb);
-			return;
+			MongoClient.connect(url, function (err, db) {
+				if (err) {
+					errorHandling(err, cb);
+					return;
+				}
+				var coll = db.collection(collection);
+				coll.update(query, { $set: data }, function (err, res) {
+					if (err) {
+						errorHandling(err, cb);
+						return;
+					}
+					cb(res);
+				})
+			})
 		}
-		var coll = db.collection(collection);
-		coll.update(query, { $set: data }, function (err, res) {
-			if (err) {
-				errorHandling(err, cb);
-				return;
-			}
-			cb(res);
-		})
-	})
-}
 
 
 exports.delete = function (collection, query, cb) {
-	MongoClient.connect(url, function (err, db) {
-		if (err) {
-			errorHandling(err, cb);
-			return;
+			MongoClient.connect(url, function (err, db) {
+				if (err) {
+					errorHandling(err, cb);
+					return;
+				}
+				var coll = db.collection(collection);
+				coll.remove(query, function (err, res) {
+					if (err) {
+						errorHandling(err, cb);
+						return;
+					}
+					cb(res);
+				});
+				db.close();
+			});
 		}
-		var coll = db.collection(collection);
-		coll.remove(query, function (err, res) {
-			if (err) {
-				errorHandling(err, cb);
-				return;
-			}
-			cb(res);
-		});
-		db.close();
-	});
-}
