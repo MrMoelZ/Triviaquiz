@@ -202,7 +202,7 @@ io.on('connection', function (socket) {
 	io.to(socket.id).emit('lobby_list', lobby);
 	socket.on('register', function (user) {
 		if (!(lobby.find(e => e.name == user.name))) {
-			let usr = { name: user.name, id: socket.id, pts: user.pts.currentGame };
+			var usr = { name: user.name, id: socket.id, pts: user.pts.currentGame };
 			lobby.push(usr);
 			console.log(usr.name, ' registered with id ', usr.id);
 			io.emit('lobby_add', usr);
