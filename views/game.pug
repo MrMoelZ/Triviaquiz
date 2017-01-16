@@ -88,16 +88,27 @@ block scripts
     });
     socket.on('quiz_a',function(answer){
       console.log('quiz_a');
-      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td>"+answer+"</td>"))
-      $('#answer').append("<span>"+answer+"</span><br/>");
+      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td>"+answer.answer+"</td>").append("<td>"+answer.player+"</td>"))
     });
     socket.on('quiz_h',function(hint){
       $('#hint').append("<span>"+hint+"</span>");
+    });
+    socket.on('quiz_start',function() {
+      console.log('start');
+      //$('.gameTableBody').html("<tr><td>Runde</td><td>Frage</td><td>Antwort</td><td>gegeben von</td>");
+      $('.gameTableBody').html('');
+      $('#startGameButton').text('Quiz beenden');
+      $('#startGameButton').off('click');
+      $('#startGameButton').on('click',endGame);
     });
     socket.on('quiz_reset',function(){
       question = null;
       round = 0;
       console.log('reset');
+      $('#question').html('');
+      $('#startGameButton').text('Quiz starten');
+      $('#startGameButton').off('click');
+      $('#startGameButton').on('click',startGame);
     });
 
     // LOBBY
@@ -124,6 +135,13 @@ block scripts
       addUsertoLobby(user);
     });
 
+    socket.on('user_update',function(user){
+      console.log($('#pts'+user.name));
+      $('#pts'+user.name).html(user.pts.thisGame);
+
+      console.log(user);
+    });
+
     // CHAT
     socket.on('chat message',function(m){
       var message = $('<span>'+m.msg+'</span>').addClass("message").addClass("sender-"+m.sender);
@@ -143,14 +161,40 @@ block scripts
       else scroll();
     });
     // click bindings
+    $('#answertext').on('keypress',function(e){
+      if(e.keyCode==13) {
+        $('#answerbutton').click();
+        return false;
+      }
+      else if(e.keyCode==9) {
+        $('#chattext').focus();
+        return false;
+      }
+    });
+    $('#chattext').on('keypress',function(e){
+      if(e.keyCode==13) {
+        $('#chatbutton').click();
+        return false;
+      }
+      else if(e.keyCode==9) {
+        $('#answertext').focus();
+        return false;
+      }
+    });
     $('#answerbutton').on('click',sendAnswer);
     $('#chatbutton').on('click',sendMsg);
     $('#minimizeChat').on('click',minimizeChat);
     $('#startGameButton').on('click',startGame);
 
+
     // functions
     function startGame() {
       socket.emit('start_request',session.passport.user.name);
+    }
+
+    function endGame() {
+      console.log('end game!');
+      socket.emit('quiz_reset');
     }
 
     function colorChat() {
@@ -159,7 +203,7 @@ block scripts
 
     function addUsertoLobby(user) {
       var name = $("<td>").html(user.name);
-      var pts = $("<td>").html(user.pts);
+      var pts = $("<td id='pts"+user.name+"'>").html(user.pts);
       var id = $("<td>").html(user.id).addClass("hidden");
       $('#lobbyTable').append($("<tr>").append(name).append(pts).append(id));
     }
@@ -184,12 +228,15 @@ block scripts
 
     function sendMsg() {
       var msg = $('#chattext').val();
+      $('#chattext').val('');
       socket.emit('chat message',{msg:msg,sender:session.passport.user.name});
     }
 
     function sendAnswer() {
       var answer = $('#answertext').val();
+      $('#answertext').val('');
       console.log(session.passport.user);
       console.log('sendAnswer',answer);
       socket.emit('answer',{answer:answer,userid:session.passport.user._id});
     }
+

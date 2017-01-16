@@ -92,8 +92,6 @@ app.set('views', './views');
 // public routes
 app.get('/', function (req, res) {
 	// res.set('X-Content-Type-Options', 'nosniff');
-	db.test('asd',{a:34});
-	console.log('asd');
 	db.find('news', {}, function (data) {
 		if (!data) {
 			res.send('ERROR NO DATABASE CONNECTION');
@@ -124,7 +122,7 @@ app.get('/game', ensureAuthenticated, function (req, res) {
 		quiz.setUsers(users);
 		quiz.setGameLength(len);
 		db.find('messages', {}, function (data) {
-			res.render('game.pug', { title: 'GAME', message: 'Welcome to the game', session: req.session, messages: data, quiz: {gameLength:len} });
+			res.render('game.pug', { title: 'GAME', message: '', session: req.session, messages: data, quiz: {gameLength:len} });
 		});
 	});
 });
@@ -139,6 +137,8 @@ app.get('/account', ensureAuthenticated, function (req, res) {
 //ADMIN!
 app.get('/admin', ensureAuthenticated, ensureAdmin, function (req, res) {
 	//app.get('/admin', function (req, res) {	
+	//		init();
+
 	db.find('user', {}, function (udata) {
 		console.log(udata);
 		users = udata;
@@ -184,8 +184,10 @@ app.get('/logout', function (req, res) {
 
 // database stuff
 function init() {
-	insert('news', { title: 'Hallo', timestamp: new Date(), text: 'Dies ist die allererste alpha Version des neuen ROFLOMG Quizzers. Funktionalitäten sind praktisch keine vorhanden.<br/>Changelog gibts mit dem ersten wirklich spielbaren Release, dies ist eher ein Datenbank / Performance check.<br/>Glhf' });
+	// insert('news', { title: 'Hallo', timestamp: new Date(), text: 'Dies ist die allererste alpha Version des neuen ROFLOMG Quizzers. Funktionalitäten sind praktisch keine vorhanden.<br/>Changelog gibts mit dem ersten wirklich spielbaren Release, dies ist eher ein Datenbank / Performance check.<br/>Glhf' });
 	insert('user', { name: 'Admin', email: 'mrmoerlin@gmail.com', password: 'Holzadmin', isAdmin: true, pts: { total: 0, thisSession: 0, thisGame: 0 } });
+	insert('user', { name: 'MrMoelZ', email: 'mrmoerlin@gmail.com', password: 'test', isAdmin: false, pts: { total: 0, thisSession: 0, thisGame: 0 } });
+	insert('user', { name: 'Test', email: 'mrmoerlin@gmail.com', password: 'test', isAdmin: false, pts: { total: 0, thisSession: 0, thisGame: 0 } });
 }
 
 var insert = function (coll, data) {
@@ -202,11 +204,16 @@ io.on('connection', function (socket) {
 	io.to(socket.id).emit('lobby_list', lobby);
 	socket.on('register', function (user) {
 		if (!(lobby.find(e => e.name == user.name))) {
-			var usr = { name: user.name, id: socket.id, pts: user.pts.currentGame };
+			var usr = { name: user.name, id: socket.id, pts: user.pts.thisGame };
 			lobby.push(usr);
 			console.log(usr.name, ' registered with id ', usr.id);
 			io.emit('lobby_add', usr);
 		}
+	});
+
+	io.on('user_update',function(user){
+		var usr = this.lobby.find(e=>e.id == user.id);
+		usr.pts = user.pts;
 	});
 
 	socket.on('start_request', function () {

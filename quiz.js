@@ -86,22 +86,22 @@ function isAnswerCorrect(answer) {
 	var modifiedAnswer = normalizeString(answer)
 	console.log('modifiedAnswer: ',modifiedAnswer);
 	var ret = questions[rand].correctAnswers.find(e=> normalizeString(e) === modifiedAnswer);
-	console.log('ret',ret);
-	return ret;
+	if(ret) return questions[rand].correctAnswers[0];
+	else return false;
 }
 
 exports.checkAnswer = function (answer, userid) {
 	if (users.length > 0) {
 		var user = users.find(e => e._id == userid);
+		var q;
 		//var user = users.find(e => e.name == 'Admin');
 		// console.log(user);
 		// console.log('in checkanswer ', answer.toLowerCase(),userid);
 		if (quizActive) {
-			if (isAnswerCorrect(answer)) {
-				user.pts.thisGame += 1;
+			if (q=isAnswerCorrect(answer)) {
+				this.addPoint(user);
 				//console.log('correct Answer len: ',questions.length,' counter ',counter,' gamelen ',gameLength);
-				//io.emit('quiz_a', questions[rand].correctAnswer);
-				io.emit('quiz_a', ret);
+				io.emit('quiz_a', {answer:q,player:user.name});
 				io.emit('quiz_info', 'richtige Antwort von '+user.name);
 				questions.splice(rand, 1);
 				if(questions.length>0 && counter<gameLength) {
@@ -123,6 +123,13 @@ exports.checkAnswer = function (answer, userid) {
 		console.log('USERS EMPTY!');
 	}
 
+}
+
+exports.addPoint = function(user) {
+	user.pts.thisGame++;
+	user.pts.total++;
+	user.pts.thisSession++;
+	io.emit('user_update',user);
 }
 
 /*
@@ -163,7 +170,10 @@ exports.checkAnswer = function(msg,usr) {
 
 
 exports.startQuiz = function () {
-	resetQuiz()
+	io.emit('quiz_start')
+	currentQuestion = 0;
+	counter=0;
+	questions = [].concat(questionPool);
 	quizActive = true;
 	console.log('Quiz started');
 	// io.emit('chat message',{'message':'Quiz gestartet', 'sender':'Quizmaster'});
