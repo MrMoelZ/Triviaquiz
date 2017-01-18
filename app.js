@@ -78,6 +78,7 @@ exports.getLobby = function () {
 
 
 
+
 //express stuff
 app.use(session({ secret: 'secret', cookie: { maxAge: 600000 } }));
 app.use(flash());
@@ -100,6 +101,7 @@ app.get('/', function (req, res) {
 			for (d of data) {
 				d.timestamp = cleanUpTimestamp(d);
 			}
+			data = data.reverse();
 			res.render('index', { title: 'ROFLOMG Quizzer', message: 'Merlin ist supertoll!', session: req.session, entries: data });
 		}
 	});
@@ -121,6 +123,7 @@ app.get('/game', ensureAuthenticated, function (req, res) {
 		quiz.setIo(io);
 		quiz.setUsers(users);
 		quiz.setGameLength(len);
+		quiz.setQuestionPool();
 		db.find('messages', {}, function (data) {
 			res.render('game.pug', { title: 'GAME', message: '', session: req.session, messages: data, quiz: {gameLength:len} });
 		});

@@ -327,6 +327,27 @@ p {
 	color:#ff0000;
 	border:1px solid white;
 	position:relative;
+	padding: 1%;
+}
+
+.quiz button {
+	margin: 10px;
+	border-radius: 10px;
+	background-color: #bbb;
+	color: #333;
+}
+
+.quiz button i {
+	padding-top:2px;
+}
+
+
+
+#answerbutton {
+	background-color: transparent;
+	border: none;
+	color: white;
+
 }
 
 #quizheader{
@@ -339,6 +360,7 @@ p {
 
 #question {
 	color:#FA7F24;
+	margin-top:2%;
 }
 
 #answer {

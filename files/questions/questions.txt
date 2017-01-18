@@ -1,6 +1,26 @@
-Wer war der erste Mann auf dem Mond
+﻿Wer war der erste Mann auf dem Mond?
 Neil Armstrong
-Wie heißt der innerste Planet des Sonnensystems
+Wie heißt der innerste Planet unseres Sonnensystems?
 Merkur
-Wieviele Bundesländer hat Deutschland (Zahl)
-16
+Wieviele Bundesländer hat Deutschland? (Zahl)
+16,sechzehn
+Wie heißt der Rekordmeister der Fußball Bundesliga?
+FC Bayern München,Bayern München,Bayern
+Wie hieß der erste schwarze Präsident der USA?
+Barack Obama,Obama
+War 2016 ein Schaltjahr?
+Ja
+Wie heißt die Hauptstadt von England?
+London
+In welchem Land steht der Eiffelturm?
+Frankreich
+Wo fand die WM 2010 statt?
+Südafrika
+Mit wem wird die Formel E=mc² in Verbindung gebracht?
+Albert Einstein,Einstein
+Was ist die Quadratwurzel von 81? (Zahl)
+9
+Wie lautet die chemische Formel von Wasser?
+H2O
+Welches ist die auflagenstärkste deutsche Zeitung?
+Bild,Bildzeitung

@@ -1,5 +1,6 @@
 var mongo = require('mongodb');
 var app = require('./app');
+var fs = require('fs');
 
 var counter = 0;
 var quizActive = false;
@@ -10,18 +11,32 @@ var gameLength = 10;
 var lobby = null;
 
 
-var questionPool = [
-	{ 'question': 'Wer war der erste Mann auf dem Mond? (Vor- und Nachname)', 'correctAnswers': ['Neil Armstrong'] },
-	{ 'question': 'Wie heißt der innerste Planet des Sonnensystems?', 'correctAnswers': ['Merkur'] },
-	{ 'question': 'Wieviele Bundesländer hat Deutschland (Zahl)?', 'correctAnswers': ['16','sechzehn'] },
-	{ 'question': 'Wie heißt der Rekordmeister der Fußball Bundesliga?', 'correctAnswers': ['FC Bayern München','Bayern München','Bayern'] },
-	{'question': 'Wie hieß der erste schwarze Präsident der USA?','correctAnswers':['Barack Obama','Obama']}
-];
+var questionPool = [];
+// [
+// 	{ 'question': 'Wer war der erste Mann auf dem Mond? (Vor- und Nachname)', 'correctAnswers': ['Neil Armstrong'] },
+// 	{ 'question': 'Wie heißt der innerste Planet des Sonnensystems?', 'correctAnswers': ['Merkur'] },
+// 	{ 'question': 'Wieviele Bundesländer hat Deutschland (Zahl)?', 'correctAnswers': ['16','sechzehn'] },
+// 	{ 'question': 'Wie heißt der Rekordmeister der Fußball Bundesliga?', 'correctAnswers': ['FC Bayern München','Bayern München','Bayern'] },
+// 	{'question': 'Wie hieß der erste schwarze Präsident der USA?','correctAnswers':['Barack Obama','Obama']}
+// ];
 
 var users;
 var questions;
 
 rand = 0;
+
+
+var getQuestionsFromFile = function(file) {
+	fs.readFile(__dirname+file,'utf8',function(err,data){
+		if(err) console.log('error reading question file: ',err);
+		var dataArray = data.split('\r\n');
+		for(var x=0;x<dataArray.length;x+=2){
+			questionPool.push({question:dataArray[x],correctAnswers:dataArray[x+1].split(',')});
+		}
+		console.log('questions successfully read',questionPool.length);
+	});
+}
+
 
 exports.setGameLength = function(len) {
 	gameLength = len;
@@ -32,8 +47,8 @@ exports.setUsers = function (u) {
 	console.log('users set ', users);
 }
 
-exports.setQuestionPool = function (questions) {
-	questionPool = [].concat(questions);
+exports.setQuestionPool = function () {
+	getQuestionsFromFile("/files/questions/questions.txt");
 }
 
 exports.setIo = function (socketio) {
