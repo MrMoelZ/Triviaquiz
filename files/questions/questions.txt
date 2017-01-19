@@ -3,7 +3,7 @@ Neil Armstrong
 Wie heißt der innerste Planet unseres Sonnensystems?
 Merkur
 Wieviele Bundesländer hat Deutschland? (Zahl)
-16,sechzehn
+16
 Wie heißt der Rekordmeister der Fußball Bundesliga?
 FC Bayern München,Bayern München,Bayern
 Wie hieß der erste schwarze Präsident der USA?

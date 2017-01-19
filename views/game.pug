@@ -27,29 +27,30 @@ block content
       input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
       button(type="submit" id="answerbutton") 
         i(class="material-icons") send
-  .chatheader(class="noselect") Chat
-    span(id="newmsgcounter" class="hidden noselect") 
-    span(id="minimizeChat" class="noselect") _
   .chat
-    div(class="messages" id="messages")
-      if messages
-        each msg in messages
-          p(class="sender-"+msg.sender)
-            img(src='/avatars/'+msg.sender+'.jpg' class="noselect")
-            span(class="sender noselect")=msg.sender
-            span(class="timestamp noselect") 
-              if msg.timestamp.getHours()<10
-                |0
-              |#{msg.timestamp.getHours()}:
-              if msg.timestamp.getMinutes()<10
-                |0
-              |#{msg.timestamp.getMinutes()}
-              | - 
-            span(class="message")=msg.msg
-  .chatfooter
-    input(type="text" id="chattext" name="chatmsg" placeholder="Chat" tabindex=2)
-    button(type="submit" id="chatbutton")
-      i(class="material-icons") send
+    .chatheader(class="noselect") Chat
+      span(id="newmsgcounter" class="hidden noselect") 
+      span(id="minimizeChat" class="noselect") _
+    .chatbody
+      div(class="messages" id="messages")
+        if messages
+          each msg in messages
+            p(class="sender-"+msg.sender)
+              img(src='/avatars/'+msg.sender+'.jpg' class="noselect")
+              span(class="sender noselect")=msg.sender
+              span(class="timestamp noselect") 
+                if msg.timestamp.getHours()<10
+                  |0
+                |#{msg.timestamp.getHours()}:
+                if msg.timestamp.getMinutes()<10
+                  |0
+                |#{msg.timestamp.getMinutes()}
+                | - 
+              span(class="message")=msg.msg
+    .chatfooter
+      input(type="text" id="chattext" name="chatmsg" placeholder="Chat" tabindex=2)
+      button(type="submit" id="chatbutton")
+        i(class="material-icons") send
   div(id="lobbyheader") Lobby
   div(id="lobby")
     table
@@ -210,12 +211,12 @@ block scripts
     }
 
     function scroll() {
-      $('.chat').animate({ scrollTop:$('#messages').height() }, "fast");
+      $('.chatbody').animate({ scrollTop:$('#messages').height() }, "fast");
       return false;
     }
 
     function minimizeChat() {
-      $('.chat').toggleClass("hidden");
+      $('.chatbody').toggleClass("hidden");
       $('.chatfooter').toggleClass("hidden");
       $('.chatheader').toggleClass("bottom-right");
       $('#newmsgcounter').toggleClass("hidden");

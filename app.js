@@ -123,7 +123,6 @@ app.get('/game', ensureAuthenticated, function (req, res) {
 		quiz.setIo(io);
 		quiz.setUsers(users);
 		quiz.setGameLength(len);
-		quiz.setQuestionPool();
 		db.find('messages', {}, function (data) {
 			res.render('game.pug', { title: 'GAME', message: '', session: req.session, messages: data, quiz: {gameLength:len} });
 		});
@@ -250,6 +249,7 @@ io.on('connection', function (socket) {
 
 // more express stuff
 http.listen(1237, function () {
+	quiz.setQuestionPool();
 	console.log('listening on *:1237');
 });
 

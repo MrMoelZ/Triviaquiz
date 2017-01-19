@@ -1,6 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
 body {
 	margin-top:0;
-	font: Helvetica, Arial;
+	font-family: Roboto;
 	margin: 0;
 	padding: 0;
 	color:#eeeeee;
@@ -23,7 +25,7 @@ textarea {
 	border:none;
 	resize: none;
 	width:60%;
-	font-family: Arial, sans-serif;
+	font-family: Roboto;
 	font-size:0.85em;
 }
 
@@ -33,7 +35,25 @@ p {
 }
 
 
+.content {
+	color:#888;
+}
+
 /* HELPERS */
+.bottom-right {
+	bottom:0 !important;
+	right:0 !important;
+}
+
+.noselect {
+	cursor:default;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+  	-moz-user-select: none;     /* Firefox all */
+  	-ms-user-select: none;      /* IE 10+ */
+  	user-select: none;
+}
+
+
 .superbig {
 	font-size: 4em;
 }
@@ -76,8 +96,8 @@ p {
 
 .loginpopout {
 	z-index:99;
+	overflow:hidden;
 	position:absolute;
-	height:12%;
 	width:15%;
 	border: 1px solid black;
 	background-color:darkorange;
@@ -193,35 +213,42 @@ p {
 	clear:both;
 }
 
-
-
 .chat {
-	background-color:#666;
+	border-top-left-radius: 15px;
+	border-top-right-radius: 15px;
+	border-bottom-left-radius: 15px;
+	border-bottom-right-radius: 15px;
 	position:absolute;
-	bottom:25px;
-	right:0;
+	right: 0;
+	bottom: 0;
 	min-width:30%;
 	max-width:30%;
-	min-height:50%;
-	max-height:50%;
+	height:350px;
 	overflow-y:scroll;
-	/*overflow-x:scroll;*/
+	overflow-x:hidden;
 }
 
-.bottom-right {
-	bottom:0 !important;
-	right:0 !important;
+
+.chatbody {
+	background-color:#666;
+	margin-bottom:25px;
 }
+
+.chatfooter button{
+	background-color: transparent;
+	border:none;
+}
+
 
 .chatheader {
 	text-align:center;
 	background-color:#333;
 	border-top-left-radius: 15px;
 	border-top-right-radius: 15px;
-	width:30%;
-	min-height:30px;
+	width:100%;
+	height:30px;
 	position:absolute;
-	bottom:52%;
+	top:0;
 	right:0;
 }
 
@@ -236,13 +263,8 @@ p {
 	line-height: 4px;
 }
 
-.noselect {
-	cursor:default;
-	-webkit-user-select: none;  /* Chrome all / Safari all */
-  	-moz-user-select: none;     /* Firefox all */
-  	-ms-user-select: none;      /* IE 10+ */
-  	user-select: none;
-}
+
+
 
 .chatheader #newmsgcounter{
 	border-radius:10px;
@@ -260,25 +282,26 @@ p {
 	position:absolute;
 	bottom:0;
 	right:0;
-	width:30%;
-	background-color:#333;
+	width:100%;
+	height:23px;
+	/*background-color:#333;*/
+	background-color:transparent;
 }
 
 .chatfooter input{
-	margin-left:3px;
-	margin-right:3px;
-	padding-left:5px;
-	padding-right:5px;
-	width:75%;
+	width:100%;
 	border:none;
 	border-radius:10px;
+	height:22px;
 }
 
 .chatfooter button {
-	width:14%;
+	position:absolute;
+	right:0;
+	z-index:1;
 }
 
-.chat p img{
+.chatbody p img{
 	height:30px;
 	width:30px;
 	border-radius:30px;
@@ -324,31 +347,15 @@ p {
 .quiz {
 	width:60%;
 	margin: 2% 5% 2% 5%;
-	color:#ff0000;
+	padding:1%;
+	color:#FF611C;
 	border:1px solid white;
 	position:relative;
-	padding: 1%;
-}
-
-.quiz button {
-	margin: 10px;
-	border-radius: 10px;
-	background-color: #bbb;
-	color: #333;
-}
-
-.quiz button i {
-	padding-top:2px;
+	background-color:rgba(200,200,200,0.7);
+	font-size:1.2em;
 }
 
 
-
-#answerbutton {
-	background-color: transparent;
-	border: none;
-	color: white;
-
-}
 
 #quizheader{
 	margin: 1%;
@@ -363,8 +370,29 @@ p {
 	margin-top:2%;
 }
 
-#answer {
+.answer {
 	color:#93CF20;
+	position:relative;
+	width:300px;
+}
+
+#answertext {
+	width:100%;
+	position:absolute;
+	height:21px;
+}
+
+#answerbutton {
+	background-color: transparent;
+	border: none;
+	color: white;
+	position:absolute;
+	right:4px;
+	top:0;
+	z-index:1;
+	color: #333;
+	width:22px;
+	cursor:pointer;
 }
 
 
