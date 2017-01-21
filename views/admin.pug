@@ -20,7 +20,10 @@ block content
               td=index+1
               td=user.name
               td=user.email
-              td=user.created
+              if user.created
+                td=user.created
+              else
+                td no data
               if user.isAdmin
                 td X
               else
