@@ -1,0 +1,14 @@
+extends layout
+block title
+  title=title
+block content
+  h1=message
+  .question
+    input(type="text" id="question" placeholder="Frage")
+    input(type="text" id="correctAnswer" placeholder="richtige Antwort")
+    i(class="material-icons" id="addAnswer")
+    .additionalAnswers
+      input(type="text" id="additionalAnswers" placeholder="weitere mögliche Antwort")
+    input(type="text" id="category" placeholder="Kategorie(optional)")
+    
+  .gamemode

@@ -218,9 +218,10 @@ io.on('connection', function (socket) {
 		usr.pts = user.pts;
 	});
 
-	socket.on('start_request', function () {
-		console.log('start request');
-		quiz.startQuiz();
+	socket.on('start_request', function (opts) {
+		console.log('start request',opts.id,opts.mode);
+		if(opts.mode == "") io.emit('start_denied',"Bitte Gamemodus auswählen");
+		else quiz.startQuiz(opts.mode);
 	});
 
 	socket.on('answer', function (answer) {

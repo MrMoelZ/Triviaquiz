@@ -6,11 +6,19 @@ block content
   h1=message
   .quiz
     div(id="quizheader")
-      span Quiz
+      span(id="heading") Quiz
       br
       span(id="quizround")
     div(id='startGame')
+      select(id="gamemode")
+        option(value="") Bitte auswählen...
+        option(value="quickshot") Quickshot
+        option(value="fiveSecs") Five Seconds to Save the World
+        option(value="sixtySecs") 60 Seconds to One Minute
       button(type="submit" id="startGameButton") Quiz starten
+      .info 
+        span Spielinfo:
+        span(id="gameInfo")
     table(class="gameTable")
       thead
         tr
@@ -144,6 +152,10 @@ block scripts
       console.log(user);
     });
 
+    socket.on('start_denied',function(msg){
+       $('#info').append("span").html(msg);
+    });
+
     // CHAT
     socket.on('chat message',function(m){
       var message = $('<span>'+m.msg+'</span>').addClass("message").addClass("sender-"+m.sender);
@@ -191,7 +203,9 @@ block scripts
 
     // functions
     function startGame() {
-      socket.emit('start_request',session.passport.user.name);
+      var mode = $('#gamemode').val();
+      var opts={user:session.passport.user._id,mode:mode};
+      socket.emit('start_request',opts);
     }
 
     function endGame() {

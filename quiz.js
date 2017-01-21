@@ -184,7 +184,7 @@ exports.checkAnswer = function(msg,usr) {
 }*/
 
 
-exports.startQuiz = function () {
+exports.startQuiz = function (mode) {
 	io.emit('quiz_start')
 	currentQuestion = 0;
 	counter=0;
