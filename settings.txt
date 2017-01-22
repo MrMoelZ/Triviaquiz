@@ -1,0 +1,15 @@
+afterCorrectAnswer: 
+'endRound,pts,randomQuestion,',
+afterWrongAnswer: '',
+endCondition: 'questionCount',
+maxQuestions: gameLength,
+maxPoints: 0,
+pointsPlacement: [1],
+pointsTime: [],
+timePerRound: 0,
+timeAfterAnswer: 0,
+questionSetType: 0,
+questionSets: [-1],
+maxPlayers: 0,
+showAnswer: true
+

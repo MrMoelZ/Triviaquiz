@@ -30,6 +30,7 @@ block content
     div(id='question')
     div(id='answer')
     div(id='hint')
+    div(id='countdown')
     div(id='info')
     .answer
       input(type="text" id="answertext" name="answer" placeholder="Antwort" tabindex=1 autofocus)
@@ -154,6 +155,10 @@ block scripts
 
     socket.on('start_denied',function(msg){
        $('#info').append("span").html(msg);
+    });
+
+    socket.on('quiz_countdown',function(time) {
+        $('#countdown').html(time);
     });
 
     // CHAT

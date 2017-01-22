@@ -93,6 +93,11 @@ app.set('views', './views');
 // public routes
 app.get('/', function (req, res) {
 	// res.set('X-Content-Type-Options', 'nosniff');
+	db.find('user',{},function(data){
+		if(data.length==0)
+			db.insert('user',{name:'Admin',password:'admin',isAdmin:true,pts:{thisGame:0,total:0,thisSession:0}},
+			function(){console.log('inserted Admin')});
+	})
 	db.find('news', {}, function (data) {
 		if (!data) {
 			res.send('ERROR NO DATABASE CONNECTION');

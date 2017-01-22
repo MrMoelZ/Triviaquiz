@@ -236,6 +236,7 @@ p {
 	overflow-y:scroll;
 	overflow-x:hidden;
 	max-height:350px;
+	height:350px;
 	width:100%;
 }
 

@@ -8,17 +8,15 @@ var currentQuestion = 0;
 var io = null;
 var gameLength = 10;
 
+var countdownTimer;
+var timer;
+var gameOptions;
+var currentMode;
+
 var lobby = null;
 
 
 var questionPool = [];
-// [
-// 	{ 'question': 'Wer war der erste Mann auf dem Mond? (Vor- und Nachname)', 'correctAnswers': ['Neil Armstrong'] },
-// 	{ 'question': 'Wie heißt der innerste Planet des Sonnensystems?', 'correctAnswers': ['Merkur'] },
-// 	{ 'question': 'Wieviele Bundesländer hat Deutschland (Zahl)?', 'correctAnswers': ['16','sechzehn'] },
-// 	{ 'question': 'Wie heißt der Rekordmeister der Fußball Bundesliga?', 'correctAnswers': ['FC Bayern München','Bayern München','Bayern'] },
-// 	{'question': 'Wie hieß der erste schwarze Präsident der USA?','correctAnswers':['Barack Obama','Obama']}
-// ];
 
 var users;
 var questions;
@@ -64,6 +62,106 @@ exports.active = function () {
 	return quizActive;
 }
 
+function getSettingsForGameMode() {
+			// afterCorrectAnswer: 
+			// 1: what happends with teh round? 
+			// 		nothing= time elapses till last person answered, switch: otherPersonsTurn
+			// 2: points? nothing: no points
+			// 3: nextQuestion? nothing: no question
+			// 4: hints TBI : nothing: no hints
+			// afterWrongAnswer
+			// points: erster - fünfter, position5: rest
+			// questionSetTye: 0 = trivia, 1 = enumeration, 2 = pictures
+			// id of question set -1 = all
+	console.log('in getgameOptions',currentMode);
+	switch(currentMode) {
+		case "quickshot": 
+			gameOptions = {
+				afterCorrectAnswer: 'endRound,pts,randomQuestion,',
+				afterWrongAnswer: '',
+				endCondition: 'questionCount',
+				maxQuestions: gameLength,
+				maxPoints: 0,
+				pointsPlacement: [1],
+				pointsTime: [],
+				timePerRound: 0,
+				timeAfterAnswer: 0,
+				questionSetType: 0,
+				questionSets: [-1],
+				maxPlayers: 0,
+				showAnswer: true
+			}
+		break;
+		case "sixtySecs":
+			gameOptions = {
+				afterCorrectAnswer: ',pts,randomQuestion,',
+				afterWrongAnswer: '',
+				endCondition: 'questionCount',
+				maxQuestions: gameLength,
+				maxPoints: 0,
+				pointsPlacement: [3,2,1,0,0,0],
+				pointsTime: [],
+				timePerRound: 60,
+				timeAfterAnswer: 0,
+				questionSetType: 0,
+				questionSets: [-1],
+				maxPlayers: 0,
+				showAnswer: false
+			}
+		break;
+		case "fiveSecs": 
+			gameOptions = {
+				afterCorrectAnswer: 'timer,pts,randomQuestion,',
+				afterWrongAnswer: '',
+				endCondition: 'questionCount',
+				maxQuestions: gameLength,
+				maxPoints: 0,
+				pointsPlacement: [3,1,1,1,1,1],
+				pointsTime: [],
+				timePerRound: 0,
+				timeAfterAnswer: 5,
+				questionSetType: 0,
+				questionSets: [-1],
+				maxPlayers: 0,
+				showAnswer: false
+			}
+		break;
+		case "pingpong": 
+			gameOptions = {
+				afterCorrectAnswer: 'switch,pts,,',
+				afterWrongAnswer: 'eliminatePlayer',
+				endCondition: 'lastManStanding',
+				maxQuestions: 0,
+				maxPoints: 0,
+				pointsPlacement: [1],
+				pointsTime: [],
+				timePerRound: 20,
+				timeAfterAnswer: 0,
+				questionSetType: 1,
+				questionSets: [-1],
+				maxPlayers: 2,
+				showAnswer:true
+			}
+		default:
+			gameOptions = {
+				afterCorrectAnswer: 'endRound,pts,randomQuestion,',
+				afterWrongAnswer: '',
+				endCondition: 'questionCount',
+				maxQuestions: 10,
+				maxPoints: 0,
+				pointsPlacement: [1],
+				pointsTime: [],
+				timePerRound: 0,
+				timeAfterAnswer: 0,
+				questionSetType: 0,
+				questionSets: [-1],
+				maxPlayers: 0,
+				showAnswer:false
+			}	
+		break;
+	}
+}
+
 
 function resetQuiz() {
 	console.log('reset Quiz');
@@ -80,16 +178,32 @@ exports.LoadQuestions = function () {
 }
 
 
-function askQuestion() {
-	rand = Math.round(Math.random() * (questions.length - 1))
-	console.log('askQuestion ', rand);
-	io.emit('quiz_q', { q: questions[rand].question, count: ++counter });
-	// io.emit('chat message',{
-	// 		'message':questions[rand].question,
-	// 		'sender':'Quizmaster'});
+function countdown(secs) {
+	console.log('in countdown');
+	var x = secs;
+	countdownTimer = setTimeout(() => {
+		console.log('the count should down',x);
+		io.emit('quiz_countdown',x)
+		countdown(x-1);
+	},1000);
+	
 }
 
-exports.askQuestion = askQuestion;
+function askQuestion() {
+	rand = Math.round(Math.random() * (questions.length - 1))
+	currentQuestion = rand;
+	console.log('askQuestion ', currentQuestion);
+	io.emit('quiz_q', { q: questions[currentQuestion].question, count: ++counter });
+	var time = gameOptions.timePerRound;
+	if(time>0) {
+		console.log('timer set');
+		//set timer
+		timer = setTimeout(function() { io.emit('quiz_timeUp'); },time*1000);
+		countdown(time);
+	}
+}
+
+//exports.askQuestion = askQuestion;
 
 function normalizeString(s) {
 	ret = s.toLowerCase();
@@ -105,33 +219,84 @@ function isAnswerCorrect(answer) {
 	else return false;
 }
 
+
+
+function checkForEnd() {
+	switch(gameOptions.endCondition) {
+		case 'questionCount':
+			return counter == gameOptions.maxQuestions;
+		case 'pointCount': 
+			// for each player loop and return if any pts.thisGame == maxPoints;
+			break;
+		case 'lastManStanding':
+			return !(players.length > 1);
+		default:
+			console.log('CHECKFOREND ERROR',gameOptions.endCondition);
+			return true;
+	}
+}
+
+function shouldAskQuestion(command) {
+	console.log('command',command);
+	if(command == 'randomQuestion') {
+		return true;
+	}
+	else return false;
+}
+
+function gameRound() {
+	if(checkForEnd()) endQuiz();
+	
+
+	if(shouldAskQuestion()) {
+		questions.splice(currentQuestion, 1);
+		askQuestion();
+	}
+
+	// askQuestion with condiiton (pingpong => only one question)
+	// timer if gametime is round end condition
+	// checkAnswer must be refactored
+	// timer in checkANswer if timer after question
+	// TODO => hints
+}
+
+function correctAnswer(user,answer) {
+	var split = gameOptions.afterCorrectAnswer.split(',');
+	var command = split[0];
+	var pts = split[1];
+	var nextQuestion = split[2];
+	if (pts == 'pts')addPoints(user);
+	io.emit('quiz_a', {answer:answer,player:user.name});
+	io.emit('quiz_info', 'richtige Antwort von '+user.name);
+	gameRound();
+}
+
+
+function wrongAnswer(user,answer) {
+	if(gameOptions.showAnswer) io.emit('quiz_info', 'falsche Antwort von '+user.name+ ': ' +answer);
+	else io.emit('quiz_info', 'falsche Antwort von '+ user.name+'.');
+	if(gameOptions.afterWrongAnswer) {
+		switch(gameOptions.afterWrongAnswer) {
+			case 'eliminatePlayer': eliminatePlayer(user);
+			break;
+			default:
+			break;
+		}
+	}
+}
+
+
+function eliminatePlayer() {
+	// TO IMPLEMENT
+}
+
 exports.checkAnswer = function (answer, userid) {
 	if (users.length > 0) {
 		var user = users.find(e => e._id == userid);
 		var q;
-		//var user = users.find(e => e.name == 'Admin');
-		// console.log(user);
-		// console.log('in checkanswer ', answer.toLowerCase(),userid);
 		if (quizActive) {
-			if (q=isAnswerCorrect(answer)) {
-				this.addPoint(user);
-				//console.log('correct Answer len: ',questions.length,' counter ',counter,' gamelen ',gameLength);
-				io.emit('quiz_a', {answer:q,player:user.name});
-				io.emit('quiz_info', 'richtige Antwort von '+user.name);
-				questions.splice(rand, 1);
-				if(questions.length>0 && counter<gameLength) {
-					askQuestion();
-				}
-				else {
-					console.log('no more questions or end game');
-					io.emit('quiz_info','Spiel beendet');
-					resetQuiz();
-				}
-			}
-			else {
-				io.emit('quiz_info', 'falsche Antwort von '+user.name);
-				console.log('incorrect answer ',answer);
-			}
+			if (q=isAnswerCorrect(answer)) correctAnswer(user,answer);
+			else wrongAnswer(user,answer);
 		}
 	}
 	else {
@@ -140,64 +305,29 @@ exports.checkAnswer = function (answer, userid) {
 
 }
 
-exports.addPoint = function(user) {
-	user.pts.thisGame++;
-	user.pts.total++;
-	user.pts.thisSession++;
+exports.addPoints = function(user,points) {
+	user.pts.thisGame+=points;
+	user.pts.total+=points;
+	user.pts.thisSession+=points;
 	io.emit('user_update',user);
 }
 
-/*
-exports.checkAnswer = function(msg,usr) {
-	console.log(msg.sender,' answered ',msg.message);
-	if(msg.message.toLowerCase() == questions[rand].a.toLowerCase()) {
-		usr.pts++;
-		io.emit('chat message',
-		{
-			'message':'Richtig \"'+msg.message+'\" ist die richtige Antwort!',
-			'sender':'Quizmaster'
-		});
-		questions.splice(rand,1);
-		lobby = app.getLobby();
-		console.log('in quiz check answer ', lobby);
-		io.emit('lobby_list',lobby);
-		if(questions.length>0) {
-			askQuestion();
-		}
-		else {
-			io.emit('chat message',
-			{
-				'message':'Keine weiteren Fragen vorhanden',
-				'sender':'Quizmaster'
-			});
-			quizActive = false;
-			currentQuestion=0;
-		}
-	}
-	else {
-		io.emit('chat message',
-		{
-			'message':'Leider falsch',
-			'sender':'Quizmaster'
-		});
-	}
-}*/
-
-
 exports.startQuiz = function (mode) {
+	currentMode = mode;
+	getSettingsForGameMode();
 	io.emit('quiz_start')
 	currentQuestion = 0;
 	counter=0;
 	questions = [].concat(questionPool);
 	quizActive = true;
 	console.log('Quiz started');
-	// io.emit('chat message',{'message':'Quiz gestartet', 'sender':'Quizmaster'});
 	io.emit('quiz_info', 'Quiz gestartet.')
-	askQuestion();
+	gameRound();
 }
 
-exports.endQuiz = function () {
+exports.endQuiz = function (winners=[]) {
 	resetQuiz();
 	console.log('Quiz ended');
-	io.emit('quiz_info', 'Quiz beendet.')
+	io.emit('quiz_info', 'Quiz beendet.');
+	io.emit('quiz_winner','Gewinner: '+winners);
 }
