@@ -209,6 +209,7 @@ block scripts
     // functions
     function startGame() {
       var mode = $('#gamemode').val();
+      console.log(session.passport.user);
       var opts={user:session.passport.user._id,mode:mode};
       socket.emit('start_request',opts);
     }

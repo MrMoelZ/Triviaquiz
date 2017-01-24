@@ -67,7 +67,7 @@ var cleanUpTimestamp = function (d) {
 }
 
 exports.getLobby = function () {
-	console.log(JSON.stringify(lobby));
+	console.log('this is lobby',JSON.stringify(lobby));
 	return lobby;
 }
 
@@ -122,7 +122,7 @@ app.get('/about', function (req, res) {
 app.get('/game', ensureAuthenticated, function (req, res) {
 	//set users
 	db.find('user', {}, function (udata) {
-		console.log(udata);
+		console.log('udata in /game', udata);
 		users = udata;
 		//quiz handling
 		quiz.setIo(io);
@@ -147,7 +147,7 @@ app.get('/admin', ensureAuthenticated, ensureAdmin, function (req, res) {
 	//		init();
 
 	db.find('user', {}, function (udata) {
-		console.log(udata);
+		console.log('in admin udata',udata);
 		users = udata;
 		db.find('question', {}, function (qdata) {
 			res.render('admin.pug', { title: 'Admin', message: 'Hello Admin', session: req.session, users: users, questionCount: qdata.length });
@@ -163,7 +163,7 @@ app.post('/deleteuser', function (req, res) {
 });
 
 app.post('/admin', function (req, res) {
-	console.log(req.body);
+	console.log('in admin post req body',req.body);
 	if (req.body.type == "user") {
 		insert('user', { created: new Date(), name: req.body.username, email: req.body.email, password: req.body.password, isAdmin: req.body.admin || false, pts: { total: 0, thisSession: 0, thisGame: 0 } });
 	}
