@@ -14,7 +14,12 @@ var gameOptions;
 var currentMode;
 var players;
 
-var lobby = null;
+var nextQuestion;
+var split;
+var command;
+var pts;
+
+var lobby = [];
 
 
 var questionPool = [];
@@ -43,7 +48,23 @@ exports.setGameLength = function(len) {
 
 exports.setUsers = function (u) {
 	users = u;
-	console.log('users set ', users);
+}
+
+exports.setLobby = function(l) {
+	lobby = l;
+}
+
+exports.addToLobby = function(user) {
+	if(! lobby.find(e=>e._id == user._id)) lobby.push(user);
+	console.log('this is lobby',lobby);
+}
+
+exports.removeFromLobby = function(user) {
+	lobby.splice(lobby.findIndex(u=>u._id==user._id),1);
+}
+
+exports.resetLobby = function() {
+	lobby = [];
 }
 
 exports.setQuestionPool = function () {
@@ -65,7 +86,7 @@ exports.active = function () {
 
 
 function getUser(id) {
-	return users.find(e => e._id == id);
+	return lobby.find(e => e._id == id);
 }
 
 function getSettingsForGameMode() {
@@ -79,7 +100,6 @@ function getSettingsForGameMode() {
 			// points: erster - fünfter, position5: rest
 			// questionSetTye: 0 = trivia, 1 = enumeration, 2 = pictures
 			// id of question set -1 = all
-	console.log('in getgameOptions',currentMode);
 	switch(currentMode) {
 		case "quickshot": 
 			gameOptions = {
@@ -186,12 +206,14 @@ exports.LoadQuestions = function () {
 
 
 function countdown(secs) {
-	console.log('in countdown');
 	var x = secs;
 	countdownTimer = setTimeout(() => {
-		console.log('the count should down',x);
 		io.emit('quiz_countdown',x);
-		if(x==0) gameRound();
+		if(x==0) {
+			console.log('times up');
+			io.emit('quiz_timeUp');
+			gameRound(nextQuestion);
+		} 
 		else countdown(x-1);
 	},1000);
 	
@@ -205,8 +227,8 @@ exports.timeUp = function() {
 function askQuestion(x) {
 	if( x != -1 ) {
 		currentQuestion = x;
-		console.log('askQuestion ', currentQuestion);
-		console.log('question: ',questions[currentQuestion]);
+		// console.log('askQuestion ', currentQuestion);
+		// console.log('question: ',questions[currentQuestion]);
 		io.emit('quiz_q', { q: questions[currentQuestion].question, count: ++counter });
 		var time = gameOptions.timePerRound;
 		if (time > 0) {
@@ -226,24 +248,22 @@ function normalizeString(s) {
 
 function isAnswerCorrect(answer) {
 	var modifiedAnswer = normalizeString(answer)
-	console.log('modifiedAnswer: ',modifiedAnswer);
+	//console.log('modifiedAnswer: ',modifiedAnswer);
 	var ret = questions[currentQuestion].correctAnswers.find(e=> normalizeString(e) === modifiedAnswer);
-	console.log()
 	if(ret) return questions[rand].correctAnswers[0];
 	else return false;
 }
 
 function shouldAskQuestion(command) {
-	console.log('command',command);
 	if(command == 'randomQuestion') return Math.round(Math.random() * (questions.length - 1));
 	else if (command == 'nextQuestion') return currentQuestion+1;
 	else return -1;
 }
 
 
-function checkIfLastPerson() {
-	// TO IMPLEMENT
-	return false;
+function IsLastPerson() {
+	var u = lobby.filter(e=>e.HasAnswered);
+	return u.length == lobby.length;
 }
 
 
@@ -273,37 +293,54 @@ function wrongAnswer(user,answer) {
 	}
 }
 
+function clearUserHasAnswered() {
+	lobby.forEach(function(u){
+		u.HasAnswered = false;
+	});
+}
+
+function clearTimers() {
+	console.log('end timers');
+	clearTimeout(timer);
+	clearTimeout(countdownTimer);
+}
 
 function correctAnswer(user,answer) {
-	var split = gameOptions.afterCorrectAnswer.split(',');
-	var command = split[0];
-	var pts = split[1];
-	var nextQuestion = split[2];
-	// remove question from questions
-	questions.splice(currentQuestion,1);
 	if (pts == 'pts') addPoints(user,howManyPts(true));
 	io.emit('quiz_a', {answer:answer,player:user.name});
 	io.emit('quiz_info', 'richtige Antwort von '+user.name);
 	// reset timers if lastPerson or endRound otherwise keep running till timers off => next gameRound
-	if(checkIfLastPerson() || command == 'endRound') {
-		console.log('end timers');
-		clearTimeout(timer);
-		clearTimeout(countdownTimer);
-		gameRound(nextQuestion);
-	}
-	// not last person and command == timer
-	else if(command == 'timer') {
+	switch(command) {
+		case 'endRound':
+			clearTimers();
+			questions.splice(currentQuestion,1);
+			gameRound(nextQuestion);
+		break;
+		case 'timer':
+		case '': 
+			user.HasAnswered = true;
+			if(IsLastPerson()) {
+				clearTimers();
+				clearUserHasAnswered();
+				questions.splice(currentQuestion,1);
+				gameRound(nextQuestion);
+			}
+		break;
+		case 'switch':
+			//TO IMPLEMENT
+			questions.splice(currentQuestion,1);
+			gameRound(nextQuestion);
+		break;
+		default: console.log('something went wrong: correctAnswer switch');
+		break;
 		
 	}
-	else if (command == 'switch') {
-		gameRound();
-	}
-	
 }
 
 
 exports.checkAnswer = function (answer, userid) {
-	if (users.length > 0) {
+	console.log('Lobby',lobby);
+	if (lobby.length > 0) {
 		var user = getUser(userid);
 		var q;
 		if (quizActive) {
@@ -314,7 +351,7 @@ exports.checkAnswer = function (answer, userid) {
 		}
 	}
 	else {
-		console.log('USERS EMPTY!');
+		console.log('LOBBY EMPTY!');
 	}
 
 }
@@ -355,10 +392,8 @@ function checkForEnd() {
 
 
 function gameRound(nextQuestion) {
-	console.log('gameRound',gameOptions);
-	console.log('gameRound nextQuestion ',nextQuestion);
 	if(checkForEnd()) endQuiz();
-	askQuestion(shouldAskQuestion(nextQuestion));
+	else askQuestion(shouldAskQuestion(nextQuestion));
 	
 	// timer if gametime is round end condition
 	// checkAnswer must be refactored
@@ -369,6 +404,10 @@ function gameRound(nextQuestion) {
 exports.startQuiz = function (mode) {
 	currentMode = mode;
 	getSettingsForGameMode();
+	split = gameOptions.afterCorrectAnswer.split(',');
+	command = split[0];
+	pts = split[1];
+	nextQuestion = split[2];
 	io.emit('quiz_start')
 	currentQuestion = 0;
 	counter = 0;
@@ -376,18 +415,21 @@ exports.startQuiz = function (mode) {
 	quizActive = true;
 	console.log('Quiz started');
 	io.emit('quiz_info', 'Quiz gestartet.');
-	// CAREFUL HERE NOT DYNAMIC!
-	gameRound('randomQuestion');
+	gameRound(nextQuestion);
 }
 
-exports.endQuiz = function (winners) {
-	console.log('in endQuiz');
+
+
+var endQuiz = function (winners) {
 	if (winners == null || winners.length == 0) winners = [];
 	resetQuiz();
 	console.log('Quiz ended');
 	io.emit('quiz_info', 'Quiz beendet.');
 	io.emit('quiz_winner','Gewinner: '+winners);
+	clearTimers();
 }
+
+exports.endQuiz = endQuiz;
 
 function resetQuiz() {
 	console.log('reset Quiz');

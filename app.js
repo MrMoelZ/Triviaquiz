@@ -12,7 +12,7 @@ var moment = require('moment');
 var mongodb = require('mongodb');
 
 
-var len = 10;
+var len = 3;
 var lobby = [];
 var users = [];
 
@@ -120,13 +120,13 @@ app.get('/about', function (req, res) {
 //needs authentication
 
 app.get('/game', ensureAuthenticated, function (req, res) {
-	//set users
 	db.find('user', {}, function (udata) {
 		console.log('udata in /game', udata);
 		users = udata;
 		//quiz handling
 		quiz.setIo(io);
 		quiz.setUsers(users);
+		quiz.addToLobby(req.session.passport.user);
 		quiz.setGameLength(len);
 		db.find('messages', {}, function (data) {
 			res.render('game.pug', { title: 'GAME', message: '', session: req.session, messages: data, quiz: {gameLength:len} });
@@ -227,6 +227,10 @@ io.on('connection', function (socket) {
 		console.log('start request',opts.id,opts.mode);
 		if(opts.mode == "") io.emit('start_denied',"Bitte Gamemodus auswählen");
 		else quiz.startQuiz(opts.mode);
+	});
+
+	socket.on('quiz_reset',function(){
+		quiz.endQuiz();
 	});
 
 	socket.on('answer', function (answer) {
