@@ -313,6 +313,12 @@ p {
 	border-radius:30px;
 }
 
+#countdown {
+	font-size: 35px;
+	color: #ff3333;
+	text-align: center;
+}
+
 #lobbyheader{
 	position:absolute;
 	top:10%;
