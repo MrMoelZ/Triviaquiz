@@ -105,6 +105,7 @@ function getSettingsForGameMode() {
 			gameOptions = {
 				afterCorrectAnswer: 'endRound,pts,randomQuestion,',
 				afterWrongAnswer: '',
+				modus: 'pointsPlacement',
 				endCondition: 'questionCount',
 				maxQuestions: gameLength,
 				maxPoints: 0,
@@ -124,6 +125,7 @@ function getSettingsForGameMode() {
 			gameOptions = {
 				afterCorrectAnswer: ',pts,randomQuestion,',
 				afterWrongAnswer: '',
+				modus: 'pointsPlacement',
 				endCondition: 'questionCount',
 				maxQuestions: gameLength,
 				maxPoints: 0,
@@ -143,6 +145,7 @@ function getSettingsForGameMode() {
 			gameOptions = {
 				afterCorrectAnswer: 'timer,pts,randomQuestion,',
 				afterWrongAnswer: '',
+				modus: 'pointsPlacement',
 				endCondition: 'questionCount',
 				maxQuestions: gameLength,
 				maxPoints: 0,
@@ -162,6 +165,7 @@ function getSettingsForGameMode() {
 			gameOptions = {
 				afterCorrectAnswer: 'switch,pts,,',
 				afterWrongAnswer: 'eliminatePlayer',
+				modus: 'pointsPlacement',
 				endCondition: 'lastManStanding',
 				maxQuestions: 0,
 				maxPoints: 0,
@@ -180,6 +184,7 @@ function getSettingsForGameMode() {
 			gameOptions = {
 				afterCorrectAnswer: 'endRound,pts,randomQuestion,',
 				afterWrongAnswer: '',
+				modus: 'pointsPlacement',
 				endCondition: 'questionCount',
 				maxQuestions: 10,
 				maxPoints: 0,
@@ -285,7 +290,7 @@ function wrongAnswer(user,answer) {
 		switch(gameOptions.afterWrongAnswer) {
 			case 'eliminatePlayer': eliminatePlayer(user);
 			break;
-			case 'deductPoints': addPoints(howManyPts(false));
+			case 'deductPoints': addPoints(user,howManyPts(user,false));
 			break;
 			default:
 			break;
@@ -306,7 +311,7 @@ function clearTimers() {
 }
 
 function correctAnswer(user,answer) {
-	if (pts == 'pts') addPoints(user,howManyPts(true));
+	if (pts == 'pts') addPoints(user,howManyPts(user,true));
 	io.emit('quiz_a', {answer:answer,player:user.name});
 	io.emit('quiz_info', 'richtige Antwort von '+user.name);
 	// reset timers if lastPerson or endRound otherwise keep running till timers off => next gameRound
@@ -356,18 +361,19 @@ exports.checkAnswer = function (answer, userid) {
 
 }
 
-function howManyPts(correct,modus) {
+function howManyPts(user,correct) {
 	// TO IMPLEMENT
 	// check which placement player has
 	// check which time 
 	if (correct) {
-		if (modus == 'placement') return gameOptions.pointsPlacement[0];
-		else if (modus == 'time') return gameOptions.pointsTime[0];
+		if (gameOptions.modus == 'pointsPlacement') return gameOptions.pointsPlacement[0];
+		else if (gameOptions.modus == 'pointsTime') return gameOptions.pointsTime[0];
 	}
 	else return gameOptions.minusPoints[0];
 }
 
 function addPoints(user,points) {
+	console.log('IN ADD POINTS ',user,points);
 	user.pts.thisGame+=points;
 	user.pts.total+=points;
 	user.pts.thisSession+=points;
@@ -436,6 +442,11 @@ function resetQuiz() {
 	io.emit('quiz_reset');
 	currentQuestion = 0;
 	counter = 0;
+	// set currentGame Points to 0
+	lobby.forEach((u) => {
+		u.pts.thisGame = 0
+		io.emit('user_update',u);
+	});
 	questions = [].concat(questionPool);
 	quizActive = false
 }

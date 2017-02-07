@@ -66,7 +66,7 @@ block content
       thead
         tr
           td Name
-          td Punkte
+          td Punkte (g/s)
           td(class="hidden") ID
       tbody(id="lobbyTable")
 
@@ -146,11 +146,8 @@ block scripts
       addUsertoLobby(user);
     });
 
-    socket.on('user_update',function(user){
-      console.log($('#pts'+user.name));
-      $('#pts'+user.name).html(user.pts.thisGame);
-
-      console.log(user);
+    socket.on('user_update',function(user){      
+      $('#pts'+user.name).html(user.pts.thisGame+'/'+user.pts.thisSession);
     });
 
     socket.on('start_denied',function(msg){
