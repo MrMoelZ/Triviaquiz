@@ -20,7 +20,7 @@ var command;
 var pts;
 
 var lobby = [];
-
+var answeredCount = 0;
 
 var questionPool = [];
 
@@ -217,6 +217,8 @@ function countdown(secs) {
 		if(x==0) {
 			console.log('times up');
 			io.emit('quiz_timeUp');
+			io.emit('quiz_a', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
+			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! :(');
 			gameRound(nextQuestion);
 		} 
 		else countdown(x-1);
@@ -255,7 +257,7 @@ function isAnswerCorrect(answer) {
 	var modifiedAnswer = normalizeString(answer)
 	//console.log('modifiedAnswer: ',modifiedAnswer);
 	var ret = questions[currentQuestion].correctAnswers.find(e=> normalizeString(e) === modifiedAnswer);
-	if(ret) return questions[rand].correctAnswers[0];
+	if(ret) return questions[currentQuestion].correctAnswers[0];
 	else return false;
 }
 
@@ -311,34 +313,37 @@ function clearTimers() {
 }
 
 function correctAnswer(user,answer) {
-	if (pts == 'pts') addPoints(user,howManyPts(user,true));
-	io.emit('quiz_a', {answer:answer,player:user.name});
-	io.emit('quiz_info', 'richtige Antwort von '+user.name);
-	// reset timers if lastPerson or endRound otherwise keep running till timers off => next gameRound
-	switch(command) {
-		case 'endRound':
-			clearTimers();
-			questions.splice(currentQuestion,1);
-			gameRound(nextQuestion);
-		break;
-		case 'timer':
-		case '': 
-			user.HasAnswered = true;
-			if(IsLastPerson()) {
+	if (!user.HasAnswered) {
+		if (pts == 'pts') addPoints(user,howManyPts(user,true));
+		if(answeredCount == 0) io.emit('quiz_a', {answer:answer,player:user.name});
+		else io.emit('quiz_a_next', {answer:answer,player:user.name})
+		io.emit('quiz_info', 'richtige Antwort von '+user.name);
+		answeredCount++;
+		// reset timers if lastPerson or endRound otherwise keep running till timers off => next gameRound
+		switch(command) {
+			case 'endRound':
 				clearTimers();
-				clearUserHasAnswered();
 				questions.splice(currentQuestion,1);
 				gameRound(nextQuestion);
-			}
-		break;
-		case 'switch':
-			//TO IMPLEMENT
-			questions.splice(currentQuestion,1);
-			gameRound(nextQuestion);
-		break;
-		default: console.log('something went wrong: correctAnswer switch');
-		break;
-		
+			break;
+			case 'timer':
+			case '': 
+				user.HasAnswered = true;
+				if(IsLastPerson()) {
+					clearTimers();
+					clearUserHasAnswered();
+					questions.splice(currentQuestion,1);
+					gameRound(nextQuestion);
+				}
+			break;
+			case 'switch':
+				//TO IMPLEMENT
+				questions.splice(currentQuestion,1);
+				gameRound(nextQuestion);
+			break;
+			default: console.log('something went wrong: correctAnswer switch');
+			break;	
+		}
 	}
 }
 
@@ -363,20 +368,19 @@ exports.checkAnswer = function (answer, userid) {
 
 function howManyPts(user,correct) {
 	// TO IMPLEMENT
-	// check which placement player has
+	
 	// check which time 
 	if (correct) {
-		if (gameOptions.modus == 'pointsPlacement') return gameOptions.pointsPlacement[0];
+		if (gameOptions.modus == 'pointsPlacement') return gameOptions.pointsPlacement[answeredCount];
 		else if (gameOptions.modus == 'pointsTime') return gameOptions.pointsTime[0];
 	}
 	else return gameOptions.minusPoints[0];
 }
 
 function addPoints(user,points) {
-	console.log('IN ADD POINTS ',user,points);
 	user.pts.thisGame+=points;
-	user.pts.total+=points;
 	user.pts.thisSession+=points;
+	user.pts.total+=points;
 	io.emit('user_update',user);
 }
 
@@ -398,11 +402,11 @@ function checkForEnd() {
 
 
 function gameRound(nextQuestion) {
+	answeredCount = 0;
 	if(checkForEnd()) endQuiz();
 	else askQuestion(shouldAskQuestion(nextQuestion));
-	
+
 	// timer if gametime is round end condition
-	// checkAnswer must be refactored
 	// timer in checkANswer if timer after question
 	// TODO => hints
 }
@@ -414,7 +418,12 @@ exports.startQuiz = function (mode) {
 	command = split[0];
 	pts = split[1];
 	nextQuestion = split[2];
-	io.emit('quiz_start')
+	io.emit('quiz_start');
+	// set currentGame Points to 0
+	lobby.forEach((u) => {
+		u.pts.thisGame = 0
+		io.emit('user_update',u);
+	});
 	currentQuestion = 0;
 	counter = 0;
 	questions = [].concat(questionPool);
@@ -442,11 +451,6 @@ function resetQuiz() {
 	io.emit('quiz_reset');
 	currentQuestion = 0;
 	counter = 0;
-	// set currentGame Points to 0
-	lobby.forEach((u) => {
-		u.pts.thisGame = 0
-		io.emit('user_update',u);
-	});
 	questions = [].concat(questionPool);
 	quizActive = false
 }
