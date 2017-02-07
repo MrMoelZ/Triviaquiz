@@ -125,6 +125,7 @@ app.get('/game', ensureAuthenticated, function (req, res) {
 		users = udata;
 		//quiz handling
 		quiz.setIo(io);
+		quiz.init();
 		quiz.setUsers(users);
 		quiz.addToLobby(req.session.passport.user);
 		quiz.setGameLength(len);
@@ -246,6 +247,10 @@ io.on('connection', function (socket) {
 
 	socket.on('test', function (data) {
 		console.log(data);
+	});
+
+	socket.on('getDescription', function(mode) {
+		quiz.getDescription(mode);
 	});
 
 	socket.on('disconnect', function () {

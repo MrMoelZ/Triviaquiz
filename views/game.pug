@@ -162,6 +162,10 @@ block scripts
         $('#countdown').html(time);
     });
 
+    socket.on('description',function(desc) {
+        $('#gameInfo').html(desc);
+    });
+
     // CHAT
     socket.on('chat message',function(m){
       var message = $('<span>'+m.msg+'</span>').addClass("message").addClass("sender-"+m.sender);
@@ -205,6 +209,7 @@ block scripts
     $('#chatbutton').on('click',sendMsg);
     $('#minimizeChat').on('click',minimizeChat);
     $('#startGameButton').on('click',startGame);
+    $('#gamemode').on('change',getDesc);
 
 
     // functions
@@ -229,6 +234,11 @@ block scripts
       var pts = $("<td id='pts"+user.name+"'>").html(user.pts);
       var id = $("<td>").html(user.id).addClass("hidden");
       $('#lobbyTable').append($("<tr>").append(name).append(pts).append(id));
+    }
+
+    function getDesc() {
+      console.log('gamemode val',$('#gamemode').val());
+      socket.emit('getDescription',$('#gamemode').val());
     }
 
     function scroll() {

@@ -23,12 +23,79 @@ var lobby = [];
 var answeredCount = 0;
 
 var questionPool = [];
+var gamePool = {};
 
 var users;
 var questions;
 
 rand = 0;
 
+
+var initGamePool = function() {
+
+	// TO IMPLEMENT IMPORTANT
+	// FINISH THIS! REFACTOR EVERYTHING TO USE THIS!
+
+	gamePool = {
+		'quickshot': {
+			afterCorrectAnswer: 'endRound,pts,randomQuestion,',
+			afterWrongAnswer: '',
+			modus: 'pointsPlacement',
+			endCondition: 'questionCount',
+			maxQuestions: gameLength,
+			maxPoints: 0,
+			pointsPlacement: [1],
+			pointsTime: [0],
+			minusPoints: [0],
+			timePerRound: 0,
+			timeAfterAnswer: 0,
+			questionSetType: 0,
+			questionSets: [-1],
+			maxPlayers: 0,
+			FreeForAll: true,
+			showAnswer: true,
+			description: 'Quickshot'
+		},
+		'sixtySecs' : {
+			afterCorrectAnswer: ',pts,randomQuestion,',
+			afterWrongAnswer: '',
+			modus: 'pointsPlacement',
+			endCondition: 'questionCount',
+			maxQuestions: gameLength,
+			maxPoints: 0,
+			pointsPlacement: [3,2,1,0,0,0],
+			pointsTime: [0],
+			minusPoints: [0],
+			timePerRound: 60,
+			timeAfterAnswer: 0,
+			questionSetType: 0,
+			questionSets: [-1],
+			maxPlayers: 0,
+			FreeForAll: true,
+			showAnswer: false,
+			description: '60 Sekunden Zeit für alle die Antwort zu geben. Je früher man antwortet desto mehr Punkte gibt es. Die Antworten (sowohl falsche als auch richtige) werden nicht gezeigt.'
+		},
+		'fiveSecs' : {
+			afterCorrectAnswer: 'timer,pts,randomQuestion,',
+			afterWrongAnswer: '',
+			modus: 'pointsPlacement',
+			endCondition: 'questionCount',
+			maxQuestions: gameLength,
+			maxPoints: 0,
+			pointsPlacement: [3,1,1,1,1,1],
+			pointsTime: [0],
+			minusPoints: [0],
+			timePerRound: 0,
+			timeAfterAnswer: 5,
+			questionSetType: 0,
+			questionSets: [-1],
+			maxPlayers: 0,
+			FreeForAll: true,
+			showAnswer: false,
+			description: ''
+		}
+	};
+}
 
 var getQuestionsFromFile = function(file) {
 	fs.readFile(__dirname+file,'utf8',function(err,data){
@@ -41,6 +108,9 @@ var getQuestionsFromFile = function(file) {
 	});
 }
 
+exports.init = function() {
+	initGamePool();
+}
 
 exports.setGameLength = function(len) {
 	gameLength = len;
@@ -69,6 +139,10 @@ exports.resetLobby = function() {
 
 exports.setQuestionPool = function () {
 	getQuestionsFromFile("/files/questions/questions.txt");
+}
+
+exports.getDescription = function(mode) {
+	io.emit('description',gamePool[mode].description);
 }
 
 exports.setIo = function (socketio) {
@@ -118,7 +192,8 @@ function getSettingsForGameMode() {
 				questionSets: [-1],
 				maxPlayers: 0,
 				FreeForAll: true,
-				showAnswer: true
+				showAnswer: true,
+				description: 'Quickshot'
 			}
 		break;
 		case "sixtySecs":
@@ -138,7 +213,8 @@ function getSettingsForGameMode() {
 				questionSets: [-1],
 				maxPlayers: 0,
 				FreeForAll: true,
-				showAnswer: false
+				showAnswer: false,
+				description: '60 Sekunden Zeit für alle die Antwort zu geben. Je früher man antwortet desto mehr Punkte gibt es. Die Antworten (sowohl falsche als auch richtige) werden nicht gezeigt.'
 			}
 		break;
 		case "fiveSecs": 
@@ -158,7 +234,8 @@ function getSettingsForGameMode() {
 				questionSets: [-1],
 				maxPlayers: 0,
 				FreeForAll: true,
-				showAnswer: false
+				showAnswer: false,
+				description: ''
 			}
 		break;
 		case "pingpong": 
@@ -178,7 +255,8 @@ function getSettingsForGameMode() {
 				questionSets: [-1],
 				maxPlayers: 2,
 				FreeForAll: false,
-				showAnswer:true
+				showAnswer:true,
+				description: ''
 			}
 		default:
 			gameOptions = {
@@ -197,7 +275,8 @@ function getSettingsForGameMode() {
 				questionSets: [-1],
 				maxPlayers: 0,
 				FreeForAll: true,
-				showAnswer:false
+				showAnswer:false,
+				description: ''
 			}	
 		break;
 	}
@@ -218,7 +297,7 @@ function countdown(secs) {
 			console.log('times up');
 			io.emit('quiz_timeUp');
 			io.emit('quiz_a', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
-			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! :(');
+			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! ¯\_(ツ)_/¯');
 			gameRound(nextQuestion);
 		} 
 		else countdown(x-1);
