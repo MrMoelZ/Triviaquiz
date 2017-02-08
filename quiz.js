@@ -204,7 +204,8 @@ function getSettingsForGameMode() {
 				endCondition: 'questionCount',
 				maxQuestions: gameLength,
 				maxPoints: 0,
-				pointsPlacement: [3,2,1,0,0,0],
+				pointsPlacement: [3,2],
+				//pointsPlacement: [3,2,1,0],
 				pointsTime: [0],
 				minusPoints: [0],
 				timePerRound: 60,
@@ -225,7 +226,7 @@ function getSettingsForGameMode() {
 				endCondition: 'questionCount',
 				maxQuestions: gameLength,
 				maxPoints: 0,
-				pointsPlacement: [3,1,1,1,1,1],
+				pointsPlacement: [3,1],
 				pointsTime: [0],
 				minusPoints: [0],
 				timePerRound: 0,
@@ -296,8 +297,8 @@ function countdown(secs) {
 		if(x==0) {
 			console.log('times up');
 			io.emit('quiz_timeUp');
-			io.emit('quiz_a', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
-			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! ¯\_(ツ)_/¯');
+			io.emit('quiz_a_last', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
+			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! ¯\\_(ツ)_/¯');
 			gameRound(nextQuestion);
 		} 
 		else countdown(x-1);
@@ -349,12 +350,12 @@ function shouldAskQuestion(command) {
 
 function IsLastPerson() {
 	var u = lobby.filter(e=>e.HasAnswered);
-	return u.length == lobby.length;
+	return u.length == lobby.filter(e=>e.isEliminated == false || e.isEliminated == null).length;
 }
 
 
 function eliminatePlayer() {
-	// TO IMPLEMENT
+	lobby.player.isEliminated = true;
 }
 
 function isUsersTurn() {
@@ -379,6 +380,12 @@ function wrongAnswer(user,answer) {
 	}
 }
 
+function clearEliminatedUsers() {
+	lobby.forEach(function(u){
+		u.isEliminated = false;
+	});
+}
+
 function clearUserHasAnswered() {
 	lobby.forEach(function(u){
 		u.HasAnswered = false;
@@ -391,34 +398,49 @@ function clearTimers() {
 	clearTimeout(countdownTimer);
 }
 
+function setHasAnswered(user) {
+	user.HasAnswered = true;
+	answeredCount++;
+}
+
+
+function endRound() {
+	clearTimers();
+	clearUserHasAnswered();				
+	questions.splice(currentQuestion,1);
+	gameRound(nextQuestion);
+
+}
+
 function correctAnswer(user,answer) {
 	if (!user.HasAnswered) {
 		if (pts == 'pts') addPoints(user,howManyPts(user,true));
-		if(answeredCount == 0) io.emit('quiz_a', {answer:answer,player:user.name});
-		else io.emit('quiz_a_next', {answer:answer,player:user.name})
+		setHasAnswered(user);
 		io.emit('quiz_info', 'richtige Antwort von '+user.name);
-		answeredCount++;
 		// reset timers if lastPerson or endRound otherwise keep running till timers off => next gameRound
 		switch(command) {
 			case 'endRound':
-				clearTimers();
-				questions.splice(currentQuestion,1);
-				gameRound(nextQuestion);
+				io.emit('quiz_a', {answer:answer,player:user.name});
+				endRound();
 			break;
 			case 'timer':
-			case '': 
-				user.HasAnswered = true;
-				if(IsLastPerson()) {
-					clearTimers();
-					clearUserHasAnswered();
-					questions.splice(currentQuestion,1);
-					gameRound(nextQuestion);
+			case '':
+				if(lobby.length > 1) {
+					if(answeredCount == 1) io.emit('quiz_a_first', {answer:answer,player:user.name});
+					else if(!IsLastPerson()) io.emit('quiz_a_next', {answer:answer,player:user.name});
+					else if(IsLastPerson()) {
+						io.emit('quiz_a_last', {answer:answer,player:user.name});
+						endRound();
+					}
+				}
+				else {
+					io.emit('quiz_a', {answer:answer,player:user.name});
+					endRound();
 				}
 			break;
 			case 'switch':
 				//TO IMPLEMENT
-				questions.splice(currentQuestion,1);
-				gameRound(nextQuestion);
+				endRound();
 			break;
 			default: console.log('something went wrong: correctAnswer switch');
 			break;	
@@ -450,7 +472,7 @@ function howManyPts(user,correct) {
 	
 	// check which time 
 	if (correct) {
-		if (gameOptions.modus == 'pointsPlacement') return gameOptions.pointsPlacement[answeredCount];
+		if (gameOptions.modus == 'pointsPlacement') return gameOptions.pointsPlacement[(answeredCount < gameOptions.pointsPlacement.length)? answeredCount : gameOptions.pointsPlacement.length];
 		else if (gameOptions.modus == 'pointsTime') return gameOptions.pointsTime[0];
 	}
 	else return gameOptions.minusPoints[0];
@@ -468,9 +490,10 @@ function checkForEnd() {
 	switch(gameOptions.endCondition) {
 		case 'questionCount':
 			return counter == gameOptions.maxQuestions;
-		case 'pointCount': 
-			// for each player loop and return if any pts.thisGame == maxPoints;
-			break;
+		case 'pointCount':
+			return !lobby.reduce((u, prev) => {
+				return prev && (u.pts.thisGame < gameOptions.maxPoints)
+			},true)
 		case 'lastManStanding':
 			return !(players.length > 1);
 		default:

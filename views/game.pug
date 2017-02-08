@@ -98,12 +98,17 @@ block scripts
       $('#question').html("<span>"+question+"</span>");
     });
     socket.on('quiz_a',function(answer){
-      console.log('quiz_a');
-      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td>"+answer.answer+"</td>").append("<td class='answerPlayer"+round+"'>"+answer.player+"</td>"))
+      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td class='answerAnswer'"+round+">"+answer.answer+"</td>").append("<td class='answerPlayer"+round+"'>"+answer.player+"</td>"))
+    });
+    socket.on('quiz_a_first',function(answer){
+      $('.gameTableBody').append($("<tr>").append("<td>"+round+"</td>").append("<td>"+question+"</td>").append("<td class='answerAnswer'"+round+">?</td>").append("<td class='answerPlayer"+round+"'>"+answer.player+"</td>"))
     });
     socket.on('quiz_a_next',function(answer){
-      console.log('quiz_a_next',$('.answerPlayer'+round));
       $('.answerPlayer'+round).append(', '+answer.player);
+    });
+    socket.on('quiz_a_last',function(answer){
+      $('.answerPlayer'+round).append(', '+answer.player);
+      $('.answerAnswer'+round).append(', '+answer.answer);
     });
     socket.on('quiz_h',function(hint){
       $('#hint').append("<span>"+hint+"</span>");
