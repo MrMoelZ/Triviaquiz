@@ -14,6 +14,7 @@ var gameOptions;
 var currentMode;
 var players;
 
+var initiated = false;
 var nextQuestion;
 var split;
 var command;
@@ -95,6 +96,7 @@ var initGamePool = function() {
 			description: ''
 		}
 	};
+	initiated = true;
 }
 
 var getQuestionsFromFile = function(file) {
@@ -109,7 +111,8 @@ var getQuestionsFromFile = function(file) {
 }
 
 exports.init = function() {
-	initGamePool();
+	if (!initiated) initGamePool();
+
 }
 
 exports.setGameLength = function(len) {
@@ -117,7 +120,7 @@ exports.setGameLength = function(len) {
 }
 
 exports.setUsers = function (u) {
-	users = u;
+	if(!users) users = u;
 }
 
 exports.setLobby = function(l) {
@@ -146,7 +149,7 @@ exports.getDescription = function(mode) {
 }
 
 exports.setIo = function (socketio) {
-	io = socketio;
+	if (!io) io = socketio;
 }
 
 exports.deactivate = function () {
@@ -293,7 +296,7 @@ exports.LoadQuestions = function () {
 function countdown(secs) {
 	var x = secs;
 	countdownTimer = setTimeout(() => {
-		io.emit('quiz_countdown',x);
+		io.emit('quiz_countdown', x);
 		if(x==0) {
 			console.log('times up');
 			io.emit('quiz_timeUp');
@@ -409,7 +412,6 @@ function endRound() {
 	clearUserHasAnswered();				
 	questions.splice(currentQuestion,1);
 	gameRound(nextQuestion);
-
 }
 
 function correctAnswer(user,answer) {
