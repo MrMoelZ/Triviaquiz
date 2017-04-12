@@ -106,7 +106,7 @@ var getQuestionsFromFile = function(file) {
 		for(var x=0;x<dataArray.length;x+=2){
 			questionPool.push({question:dataArray[x],correctAnswers:dataArray[x+1].split(',')});
 		}
-		console.log('questions successfully read',questionPool.length);
+		//console.log('questions successfully read',questionPool.length);
 	});
 }
 
@@ -298,11 +298,16 @@ function countdown(secs) {
 	countdownTimer = setTimeout(() => {
 		io.emit('quiz_countdown', x);
 		if(x==0) {
-			console.log('times up');
+			//console.log('times up');
 			io.emit('quiz_timeUp');
-			io.emit('quiz_a_last', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
-			io.emit('quiz_info', 'Niemand wusste die richtige Antwort! ¯\\_(ツ)_/¯');
-			gameRound(nextQuestion);
+			if (answeredCount == 0) {
+				io.emit('quiz_info', 'Niemand wusste die richtige Antwort! ¯\\_(ツ)_/¯');
+				io.emit('quiz_a', {answer: questions[currentQuestion].correctAnswers[0],player: '-'});
+			}
+			else {
+				io.emit('quiz_a_correct',questions[currentQuestion].correctAnswers[0]);
+			}
+			endRound();
 		} 
 		else countdown(x-1);
 	},1000);
@@ -310,19 +315,19 @@ function countdown(secs) {
 }
 
 exports.timeUp = function() {
-	console.log('in timeUp');
+	//console.log('in timeUp');
 	clearTimeout(timer);
 }
 
 function askQuestion(x) {
 	if( x != -1 ) {
 		currentQuestion = x;
-		// console.log('askQuestion ', currentQuestion);
-		// console.log('question: ',questions[currentQuestion]);
+		//console.log('askQuestion ', currentQuestion);
+		//console.log('question: ',questions[currentQuestion]);
 		io.emit('quiz_q', { q: questions[currentQuestion].question, count: ++counter });
 		var time = gameOptions.timePerRound;
 		if (time > 0) {
-			console.log('timer set');
+			//console.log('timer set');
 			//set timer
 			timer = setTimeout(function() { io.emit('quiz_timeUp'); },time*1000);
 			countdown(time);
@@ -396,7 +401,7 @@ function clearUserHasAnswered() {
 }
 
 function clearTimers() {
-	console.log('end timers');
+	//console.log('end timers');
 	clearTimeout(timer);
 	clearTimeout(countdownTimer);
 }
@@ -429,9 +434,9 @@ function correctAnswer(user,answer) {
 			case '':
 				if(lobby.length > 1) {
 					if(answeredCount == 1) io.emit('quiz_a_first', {answer:answer,player:user.name});
-					else if(!IsLastPerson()) io.emit('quiz_a_next', {answer:answer,player:user.name});
-					else if(IsLastPerson()) {
-						io.emit('quiz_a_last', {answer:answer,player:user.name});
+					else io.emit('quiz_a_next', {answer:answer,player:user.name});
+					if(IsLastPerson()) {
+						io.emit('quiz_a_correct',answer);
 						endRound();
 					}
 				}
@@ -452,7 +457,7 @@ function correctAnswer(user,answer) {
 
 
 exports.checkAnswer = function (answer, userid) {
-	console.log('Lobby',lobby);
+	//console.log('Lobby',lobby);
 	if (lobby.length > 0) {
 		var user = getUser(userid);
 		var q;

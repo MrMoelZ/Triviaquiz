@@ -20,6 +20,12 @@ var db = require('./db');
 var quiz = require('./quiz');
 
 
+// setup quiz
+//quiz handling
+		quiz.setIo(io);
+		quiz.init();
+		quiz.setGameLength(len);
+
 // passport stuff
 passport.use('local', new LocalStrategy(
 	function (username, password, done) {
@@ -123,12 +129,8 @@ app.get('/game', ensureAuthenticated, function (req, res) {
 	db.find('user', {}, function (udata) {
 		console.log('udata in /game', udata);
 		users = udata;
-		//quiz handling
-		quiz.setIo(io);
-		quiz.init();
 		quiz.setUsers(users);
 		quiz.addToLobby(req.session.passport.user);
-		quiz.setGameLength(len);
 		db.find('messages', {}, function (data) {
 			res.render('game.pug', { title: 'GAME', message: '', session: req.session, messages: data, quiz: {gameLength:len} });
 		});
